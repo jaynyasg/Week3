@@ -163,3 +163,18 @@ Even if deployed on Render rather than AWS, the system should document security-
 - Target reference: `Week2 - Test Suite/`
 - Week 2 architecture style: `Week2 - Test Suite/ARCHITECTURE.md`
 - Week 2 defense style: `Week2 - Test Suite/deploy/docs/architecture-defense.md`
+
+## Appendix
+
+| Tool | Why chosen | Alternative considered | Why not |
+| --- | --- | --- | --- |
+| FastAPI | Matches the Week 2 agent pattern; OpenAPI-first; good fit for protected campaign, health, readiness, and artifact routes | Flask | Less schema discipline and weaker async ergonomics for target/provider calls |
+| Pydantic | Keeps campaign, target, verdict, artifact, and report payloads explicit and validated | Plain dictionaries | Too easy for eval artifacts to drift or omit required evidence fields |
+| Render | Existing Week 2 target uses Render; blueprints make deployed AgentForge plus deployed OpenEMR easier to explain in one deployment story | Fly.io | Week 2 already pivoted away from Fly; using both would add deployment narrative noise |
+| Hosted low-cost LLM provider abstraction | Deployed campaigns need hosted inference; provider swap protects against refusal behavior, pricing changes, and rate limits | Local-only Ollama | Useful for development only; cannot produce canonical deployed evidence |
+| Deterministic judge checks | Cheap, repeatable, and strong for obvious failures such as RBAC bypass, patient-scope mismatch, target override, and missing refusal | LLM-only judge | Higher cost and can hallucinate or share blind spots with the red-team model |
+| JSON/YAML cases plus JSONL results | Human-reviewable fixtures with append-friendly deployed run evidence | Database-first eval storage | More operational weight before the MVP proves the artifact schema |
+| Markdown vulnerability reports | Easy for graders and maintainers to read, diff, and link to regression cases | Ticket-only findings | Requires tracker setup and makes repository submission less self-contained |
+| Persistent disk or object storage | Deployed evidence must survive restarts and be retrievable for grading | Ephemeral container filesystem | A finding that disappears on restart is not defensible submission evidence |
+| Pytest | Matches Week 2 eval/test style and is sufficient for platform unit/integration confidence | Custom test harness only | Harder to integrate with familiar Python test workflow; useful later for replay orchestration |
+| OWASP/MITRE/NIST/CISA/CSA framework refs | Grounds findings in known LLM security practice instead of inventing a private taxonomy | Project-specific category names only | Harder to defend to security reviewers and easier to miss known risk classes |
