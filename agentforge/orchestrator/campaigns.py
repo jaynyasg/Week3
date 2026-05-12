@@ -1,0 +1,144 @@
+from __future__ import annotations
+
+import logging
+
+from agentforge.attacks.budget import BudgetLedger, estimate_redteam_cost
+from agentforge.attacks.catalog import AttackCatalog
+from agentforge.config import AgentForgeSettings
+from agentforge.judge.deterministic import DeterministicJudge
+from agentforge.judge.llm_judge import LlmJudge
+from agentforge.models.campaign import CampaignPlan, CampaignStartRequest
+from agentforge.models.finding import Finding, Verdict
+from agentforge.models.run_artifact import RunArtifact
+from agentforge.observability.events import build_run_event, log_agentforge_event
+from agentforge.observability.langfuse_client import LangfuseRecorder
+from agentforge.redteam.providers import create_redteam_provider
+from agentforge.reporting.vulnerability_report import (
+    build_regression_case,
+    render_vulnerability_report,
+)
+from agentforge.storage.artifact_store import ArtifactStore
+from agentforge.targets.allowlist import TargetAllowlist
+from agentforge.targets.clinical_copilot import ClinicalCoPilotClient
+
+_LOG = logging.getLogger(__name__)
+
+
+class CampaignExecutor:
+    def __init__(
+        self,
+        *,
+        settings: AgentForgeSettings,
+        catalog: AttackCatalog,
+        store: ArtifactStore,
+        allowlist: TargetAllowlist,
+        target_client: ClinicalCoPilotClient | None = None,
+        langfuse: LangfuseRecorder | None = None,
+    ) -> None:
+        self.settings = settings
+        self.catalog = catalog
+        self.store = store
+        self.allowlist = allowlist
+        self.target_client = target_client or ClinicalCoPilotClient(settings, allowlist)
+        self.redteam = create_redteam_provider(settings)
+        self.deterministic_judge = DeterministicJudge()
+        self.llm_judge = LlmJudge(settings)
+        self.langfuse = langfuse or LangfuseRecorder(settings)
+
+    def build_plan(self, request: CampaignStartRequest) -> CampaignPlan:
+        self.allowlist.require_any()
+        target_alias = request.target_alias or self.settings.default_target_alias
+        if target_alias is None:
+            raise ValueError("target alias is required")
+        self.allowlist.resolve(target_alias)
+        max_cases = (
+            request.max_cases
+            if request.max_cases is not None
+            else self.settings.max_cases_per_campaign
+        )
+        budget_usd = (
+            request.budget_usd
+            if request.budget_usd is not None
+            else self.settings.budget_usd
+        )
+        cases = self.catalog.select(
+            category=request.category,
+            case_ids=request.case_ids,
+            max_cases=max_cases,
+        )
+        return CampaignPlan(
+            target_alias=target_alias,
+            category=request.category,
+            case_ids=request.case_ids,
+            max_cases=max_cases,
+            budget_usd=budget_usd,
+            cases=cases,
+        )
+
+    def run(self, request: CampaignStartRequest) -> RunArtifact:
+        plan = self.build_plan(request)
+        ledger = BudgetLedger(plan.budget_usd)
+        run = RunArtifact(
+            campaign_id=plan.campaign_id,
+            target_alias=plan.target_alias,
+            evidence_environment=self.settings.evidence_environment,
+            budget_usd=plan.budget_usd,
+            model_provider=getattr(self.redteam, "provider", "deterministic"),
+            model_name=getattr(self.redteam, "model", "deterministic"),
+            judge_model_provider=self.settings.judge_provider,
+            judge_model_name=self.settings.judge_model,
+        )
+
+        for case in plan.cases:
+            projected = estimate_redteam_cost(case)
+            if not ledger.can_spend(projected):
+                ledger.skip()
+                continue
+            provider_result = self.redteam.mutate(case)
+            ledger.spend(provider_result.estimated_cost_usd)
+            if provider_result.refusal:
+                run.refusal_count += 1
+            exchange = self.target_client.run_case(
+                provider_result.case,
+                plan.target_alias,
+            )
+            run.exchanges.append(exchange)
+            judge_result = self.deterministic_judge.evaluate(provider_result.case, exchange)
+            if judge_result.verdict == Verdict.INCONCLUSIVE:
+                judge_result = self.llm_judge.evaluate(provider_result.case, exchange)
+            if judge_result.verdict != Verdict.SAFE:
+                finding = Finding(
+                    run_id=run.run_id,
+                    case_id=provider_result.case.id,
+                    title=provider_result.case.title,
+                    category=provider_result.case.category,
+                    framework_refs=provider_result.case.framework_refs,
+                    verdict=judge_result.verdict,
+                    severity=judge_result.severity,
+                    confidence=judge_result.confidence,
+                    judge_mode=judge_result.judge_mode,
+                    rationale=judge_result.rationale,
+                    evidence=judge_result.evidence,
+                ).with_default_status()
+                run.findings.append(finding)
+                self.store.save_finding(finding)
+                self.store.save_report(
+                    finding.finding_id,
+                    render_vulnerability_report(finding, run),
+                )
+                if not finding.requires_human_approval():
+                    self.store.save_regression_case(
+                        finding.finding_id,
+                        build_regression_case(finding),
+                    )
+
+        if ledger.skipped_count and not run.exchanges:
+            run.status = "budget_halted"
+        run.estimated_cost_usd = round(ledger.spent_usd, 6)
+        run.skipped_count = ledger.skipped_count
+        run.finish()
+        langfuse_payload = self.langfuse.record_run(run)
+        run.langfuse_trace_id = str(langfuse_payload.get("trace_id", run.run_id))
+        self.store.save_run(run)
+        log_agentforge_event(_LOG, "campaign_completed", fields=build_run_event(run))
+        return run

@@ -82,6 +82,36 @@ The deployed platform will require:
 - Hard budget limits for model spend and campaign size.
 - Human approval for high-severity, ambiguous, partial, or LLM-judge-only findings before final report/regression promotion.
 
+## Run Locally For Development
+
+Local runs are development checks only. They do not replace deployed evidence.
+
+```bash
+python -m pytest tests/agentforge -q
+uvicorn agentforge.http.app:create_app --factory --host 127.0.0.1 --port 8080
+```
+
+Protected operator routes accept either:
+
+```text
+Authorization: Bearer <AGENTFORGE_OPERATOR_TOKEN>
+X-AgentForge-Operator-Token: <AGENTFORGE_OPERATOR_TOKEN>
+```
+
+## Deployed Operation
+
+Deploy AgentForge separately from the Week 2 OpenEMR / Clinical Co-Pilot target. Configure the deployed target URL by environment variable:
+
+```text
+AGENTFORGE_TARGET_URL=https://<deployed-clinical-agent-or-openemr-proxy>
+AGENTFORGE_TARGET_CHAT_PATH=/agent/chat
+AGENTFORGE_EVIDENCE_ENVIRONMENT=deployed
+AGENTFORGE_ARTIFACT_DIR=/app/evals
+```
+
+The Render blueprint in `render.yaml` attaches persistent storage at `/app/evals`.
+See `deploy/docs/deployment.md` and `deploy/docs/operator-runbook.md`.
+
 ## Non-Goals
 
 - Arbitrary internet scanning.

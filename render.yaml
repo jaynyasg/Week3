@@ -1,0 +1,46 @@
+# render.yaml - AgentForge security platform on Render
+#
+# This blueprint deploys the Week 3 security app only. The Week 2 OpenEMR /
+# Clinical Co-Pilot target remains a separate deployment and is referenced by
+# AGENTFORGE_TARGET_URL.
+
+services:
+  - type: web
+    name: agentforge-security
+    runtime: docker
+    plan: starter
+    region: virginia
+    healthCheckPath: /health
+    disk:
+      name: agentforge-evidence
+      mountPath: /app/evals
+      sizeGB: 1
+    envVars:
+      - key: PYTHONPATH
+        value: /app
+      - key: AGENTFORGE_ARTIFACT_DIR
+        value: /app/evals
+      - key: AGENTFORGE_EVIDENCE_ENVIRONMENT
+        value: deployed
+      - key: AGENTFORGE_OPERATOR_TOKEN
+        sync: false
+      - key: AGENTFORGE_TARGET_URL
+        sync: false
+      - key: AGENTFORGE_TARGET_CHAT_PATH
+        value: /agent/chat
+      - key: AGENTFORGE_TARGET_DEMO_BYPASS
+        value: "1"
+      - key: AGENTFORGE_PROVIDER_MODE
+        value: deterministic
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LANGFUSE_ENABLED
+        value: "0"
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: LANGFUSE_BASE_URL
+        sync: false

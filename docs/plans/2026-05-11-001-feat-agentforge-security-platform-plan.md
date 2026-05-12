@@ -1,7 +1,7 @@
 ---
 title: "feat: Build deployed AgentForge adversarial security platform"
 type: feat
-status: active
+status: completed
 date: 2026-05-11
 origin: docs/brainstorms/week3-adversarial-ai-security-platform-requirements.md
 ---
