@@ -49,6 +49,7 @@ This threat model maps to OWASP LLM Top 10, OWASP GenAI Red Teaming Guide, OWASP
 | PHI exfiltration | Tool results, transcripts, artifacts | OWASP-LLM02, NIST data privacy | Do not disclose unauthorized patient data. |
 | Cross-patient exposure | `patient_id` in request and tool args | OWASP-LLM02, OWASP-MCP authz | Tool args must match active session patient. |
 | Authorization bypass | `AGENT_DEMO_BYPASS`, `X-Agent-Demo-Role`, cookies, bearer auth | OWASP-LLM06, OWASP-MCP authn/authz | Unknown or overbroad roles get refusal. |
+| Persona hijacking | User prompts asking the model to act as physician, admin, or system operator regardless of the caller's actual role | OWASP-LLM01, OWASP-LLM07, MITRE ATLAS persona spoofing | Model must not perform tools or disclose data above the caller's authenticated role even when asked to "roleplay" or "pretend". |
 | Tool misuse | OpenAI function calls in `dispatch.py` | OWASP-LLM06, OWASP-MCP tool poisoning | Tool name and role must be validated in code. |
 | Parameter tampering | Malformed JSON, extra keys, wrong patient ID | OWASP-LLM06 | Return structured errors or refusal. |
 | Recursive tool calls | OpenAI tool loop max rounds | OWASP-LLM10 | Halt at budget/round cap with explicit result. |

@@ -59,6 +59,10 @@ Important target surfaces include:
 - `Week2 - Test Suite/EVAL.md`
 - `Week2 - Test Suite/render.yaml`
 
+## Target Readiness Changes
+
+No code changes were made to the Week 2 Clinical Co-Pilot target during Week 3. The deployed target at `https://clinical-copilot-4kwb.onrender.com` runs the Week 2 codebase as-is, with its existing RBAC, patient-scope, tool-round, body-limit, and refusal defenses unchanged. Week 3 work consisted entirely of standing up the separate AgentForge security platform (`agentforge/`, `evals/`, `deploy/`, `Dockerfile`, `render.yaml`, threat-model and architecture docs) that *calls* the deployed target. The only Week 3 commit that touched `Week2 - Test Suite/` was the initial repo organization commit that brought the Week 2 folder in as a read-only reference; subsequent Week 3 commits modified only AgentForge files. This preserves the integrity of the system under test: every finding in `evals/results/` is a verdict on the Week 2 target's published behavior, not on a custom-instrumented variant. Operator authentication for the target's chat route uses the existing demo configuration (`AGENT_DEMO_BYPASS` + role headers) documented under `Week2 - Test Suite/agent/http/deps.py`; AgentForge passes those headers per-case rather than altering the target's auth model.
+
 ## Security Baseline
 
 AgentForge maps findings to existing AI security guidance instead of inventing a private taxonomy:
