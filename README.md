@@ -2,6 +2,20 @@
 
 AgentForge is a deployed adversarial security platform for evaluating the deployed OpenEMR Clinical Co-Pilot target from Week 2. It is not a clinical assistant and it is not a general-purpose scanner. Its job is to run bounded, allowlisted security campaigns against the deployed healthcare AI target, preserve reproducible evidence, and convert confirmed failures into vulnerability reports and regression artifacts.
 
+## Deployed URLs
+
+- AgentForge security platform: <https://agentforge-security.onrender.com>
+- Target Clinical Co-Pilot (Week 2): <https://clinical-copilot-4kwb.onrender.com>
+
+Submission evidence comes from the deployed AgentForge platform calling the deployed Clinical Co-Pilot target. Health and readiness checks are public:
+
+```bash
+curl https://agentforge-security.onrender.com/health
+curl https://agentforge-security.onrender.com/ready
+```
+
+Operator endpoints (campaigns, findings, approvals, artifacts) require the `AGENTFORGE_OPERATOR_TOKEN` bearer header and are documented in `deploy/docs/operator-runbook.md`.
+
 ## Project Status
 
 This repository is in Week 3 build-out. Current planning artifacts:
