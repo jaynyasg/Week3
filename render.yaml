@@ -3,6 +3,10 @@
 # This blueprint deploys the Week 3 security app only. The Week 2 OpenEMR /
 # Clinical Co-Pilot target remains a separate deployment and is referenced by
 # AGENTFORGE_TARGET_URL.
+#
+# Writable evidence must NOT mount over /app/evals: case YAML ships under
+# /app/evals/cases in the image; a disk at /app/evals replaces that tree and
+# yields an empty attack catalog (empty campaign exchanges).
 
 services:
   - type: web
@@ -13,13 +17,13 @@ services:
     healthCheckPath: /health
     disk:
       name: agentforge-evidence
-      mountPath: /app/evals
+      mountPath: /data/agentforge
       sizeGB: 1
     envVars:
       - key: PYTHONPATH
         value: /app
       - key: AGENTFORGE_ARTIFACT_DIR
-        value: /app/evals
+        value: /data/agentforge
       - key: AGENTFORGE_EVIDENCE_ENVIRONMENT
         value: deployed
       - key: AGENTFORGE_OPERATOR_TOKEN

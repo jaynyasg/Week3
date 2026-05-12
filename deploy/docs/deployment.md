@@ -9,7 +9,7 @@ deployed AgentForge calling deployed OpenEMR; local runs are development-only.
 The root `render.yaml` provisions one web service:
 
 - `agentforge-security`: FastAPI app served by Uvicorn.
-- Persistent disk mounted at `/app/evals`.
+- Persistent disk mounted at `/data/agentforge` (see `render.yaml`); seed cases remain under `/app/evals/cases` in the image.
 - Public health check at `/health`.
 - Protected operator/API surface under `/operator/*`.
 
@@ -20,7 +20,7 @@ The root `render.yaml` provisions one web service:
 | `AGENTFORGE_OPERATOR_TOKEN` | Bearer/operator token for campaign, artifact, and approval routes. |
 | `AGENTFORGE_TARGET_URL` | Deployed OpenEMR / Clinical Co-Pilot base URL. |
 | `AGENTFORGE_TARGET_CHAT_PATH` | Target chat path, usually `/agent/chat`. |
-| `AGENTFORGE_ARTIFACT_DIR` | Persistent artifact root, `/app/evals` on Render. |
+| `AGENTFORGE_ARTIFACT_DIR` | Writable artifact root. On Render use `/data/agentforge` (must match disk `mountPath` in `render.yaml`). |
 | `AGENTFORGE_EVIDENCE_ENVIRONMENT` | Must be `deployed` for submission evidence. |
 | `AGENTFORGE_BUDGET_USD` | Per-campaign LLM budget cap. |
 | `AGENTFORGE_PROVIDER_MODE` | `deterministic` for dry/safe mode, `live` for hosted LLM calls. |
@@ -30,6 +30,27 @@ The root `render.yaml` provisions one web service:
 | `LANGFUSE_PUBLIC_KEY` | Langfuse project public key. |
 | `LANGFUSE_SECRET_KEY` | Langfuse project secret key. |
 | `LANGFUSE_BASE_URL` | Langfuse cloud or private/self-hosted base URL. |
+
+## Render dashboard: secrets to set (submission)
+
+In the Render service **Environment** tab, set at least:
+
+| Variable | Notes |
+| --- | --- |
+| `AGENTFORGE_OPERATOR_TOKEN` | Long random secret; required for `/operator/*`. |
+| `AGENTFORGE_TARGET_URL` | Base URL of the **deployed** Week 2 Clinical Co-Pilot (no trailing slash). |
+| `GROQ_API_KEY` | Required when `AGENTFORGE_PROVIDER_MODE=live` for Groq red-team. |
+| `OPENAI_API_KEY` | Required when `AGENTFORGE_PROVIDER_MODE=live` for judge/docs fallback. |
+
+Optional Langfuse (only if `LANGFUSE_ENABLED=1`):
+
+| Variable | Notes |
+| --- | --- |
+| `LANGFUSE_PUBLIC_KEY` | Project public key. |
+| `LANGFUSE_SECRET_KEY` | Project secret key. |
+| `LANGFUSE_BASE_URL` | Or `LANGFUSE_HOST` per app config. |
+
+Keep `AGENTFORGE_EVIDENCE_ENVIRONMENT=deployed` for canonical submission evidence.
 
 ## Security Groups And Network Boundaries
 
@@ -59,7 +80,7 @@ secrets.
 2. Rotate `AGENTFORGE_OPERATOR_TOKEN`.
 3. Set `AGENTFORGE_PROVIDER_MODE=deterministic` to stop live LLM spend.
 4. Set `LANGFUSE_ENABLED=0` if telemetry must be stopped.
-5. Preserve `/app/evals` before deleting the service if evidence is needed.
+5. Preserve the persistent disk (`AGENTFORGE_ARTIFACT_DIR`, e.g. `/data/agentforge`) before deleting the service if evidence is needed.
 
 ## Rollback
 

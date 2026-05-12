@@ -106,11 +106,13 @@ Deploy AgentForge separately from the Week 2 OpenEMR / Clinical Co-Pilot target.
 AGENTFORGE_TARGET_URL=https://<deployed-clinical-agent-or-openemr-proxy>
 AGENTFORGE_TARGET_CHAT_PATH=/agent/chat
 AGENTFORGE_EVIDENCE_ENVIRONMENT=deployed
-AGENTFORGE_ARTIFACT_DIR=/app/evals
+AGENTFORGE_ARTIFACT_DIR=/data/agentforge
 ```
 
-The Render blueprint in `render.yaml` attaches persistent storage at `/app/evals`.
-See `deploy/docs/deployment.md` and `deploy/docs/operator-runbook.md`.
+The Render blueprint in `render.yaml` mounts persistent storage at `/data/agentforge` and sets `AGENTFORGE_ARTIFACT_DIR` to match (so the image’s baked-in case catalog under `/app/evals/cases` is not hidden by the disk).
+
+Submission checklist (env vars, smoke, evidence, F1–F6 mapping): `deploy/docs/mvp-submission-runbook.md`.  
+Also see `deploy/docs/deployment.md`, `deploy/docs/smoke-checklist.md`, `deploy/docs/operator-runbook.md`, and `deploy/scripts/Deploy-Smoke.ps1`.
 
 ## Non-Goals
 
