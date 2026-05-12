@@ -20,6 +20,6 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV AGENTFORGE_ARTIFACT_DIR=/app/evals
 
-EXPOSE 8080
+EXPOSE 10000
 
-CMD ["uvicorn", "agentforge.http.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "uvicorn agentforge.http.app:create_app --factory --host 0.0.0.0 --port ${PORT:-10000}"]
