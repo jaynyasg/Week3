@@ -1,10 +1,10 @@
 # Architecture defense - talking points
 
-_Last updated: 2026-05-11 (Week 3 planning foundation)._
+_Last updated: 2026-05-12 (Week 3 planning foundation)._
 
 Companion to the Week 3 demo script and `ARCHITECTURE.md`. One paragraph per major architecture decision, in the order a grader is likely to ask about them. Read this before the defense; do not read it on camera.
 
-The strongest single beat is the **independent judge plus deterministic regression harness**. If there is time for only one architecture point, lead with this: AgentForge does not ask the same LLM that generated an attack to decide whether the attack worked.
+The strongest single beat is the **independent judge plus deterministic regression harness**. If there is time for only one architecture point, lead with this: AgentForge does not ask the same LLM that generated an attack to decide whether the attack worked, and high-severity or ambiguous findings require human approval before they become final evidence.
 
 ---
 
@@ -44,27 +44,27 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 ---
 
-## ADR-004 - Independent judge with deterministic checks first
+## ADR-004 - Independent judge with deterministic checks and approval first
 
-**The decision:** the Red Team Agent generates attacks, but the Judge Agent evaluates results from separate context. Deterministic checks handle clear failures before any LLM judge is used.
+**The decision:** the Red Team Agent generates attacks, but the Judge Agent evaluates results from separate context. Deterministic checks handle clear failures before any LLM judge is used. High-severity, partial, inconclusive, or LLM-judge-only findings move to `needs_approval` before report finalization or regression promotion.
 
-**Why:** LLM-as-judge can hallucinate, over-trust a plausible response, or share blind spots with the attack generator. Deterministic checks are cheaper and more repeatable for obvious failures like PHI leakage, wrong-role data access, patient-scope mismatch, target override, and missing refusal.
+**Why:** LLM-as-judge can hallucinate, over-trust a plausible response, or share blind spots with the attack generator. Deterministic checks are cheaper and more repeatable for obvious failures like PHI leakage, wrong-role data access, patient-scope mismatch, target override, and missing refusal. Human approval keeps security claims from being auto-promoted when the evidence is severe or uncertain.
 
-**Evidence:** OWASP and NIST both emphasize testing, measurement, and human/technical verification. The plan includes judge goldens before relying on ambiguous semantic judging.
+**Evidence:** OWASP and NIST both emphasize testing, measurement, and human/technical verification. The plan includes judge goldens before relying on ambiguous semantic judging, and the architecture defines the finding state machine `draft -> needs_approval -> approved -> regression_queued`.
 
-**Defense one-liner:** "The platform does not trust an LLM to grade itself; clear failures are deterministic, and ambiguous cases get independent review."
+**Defense one-liner:** "The platform does not trust an LLM to grade itself; clear failures are deterministic, and severe or ambiguous cases need a human sign-off."
 
 ---
 
 ## ADR-005 - Low-cost hosted model routing
 
-**The decision:** deployed campaigns use a hosted low-cost model provider behind a provider abstraction. Local-only models are allowed for development fallback but not for submission evidence.
+**The decision:** deployed campaigns use Groq `llama-3.1-8b-instant` as the default Red Team Agent generator and OpenAI `gpt-5-nano` as the default LLM fallback for ambiguous judge decisions and documentation drafting. Both sit behind role-specific provider settings so they can be swapped if credentials, pricing, or refusal behavior change.
 
-**Why:** the platform itself is deployed, so deployed campaigns need hosted inference. A provider abstraction lets us switch when price, rate limit, or refusal behavior gets in the way.
+**Why:** the platform itself is deployed, so deployed campaigns need hosted inference. Groq gives a fast, low-cost mutation path for high-volume authorized tests; `gpt-5-nano` is a low-cost classification/summarization fit for the much smaller fallback judge path. Separating the red-team and judge model reduces shared blind spots.
 
-**Evidence:** the cost plan tracks Red Team, Judge, Documentation, retries, refusals, and target infrastructure separately. The model choice is an environment/configuration decision, not an architecture rewrite.
+**Evidence:** the cost plan tracks Red Team, Judge, Documentation, retries, refusals, and target infrastructure separately. The architecture records provider/model metadata on every run so actual refusal rate, latency, and spend can override assumptions.
 
-**Defense one-liner:** "Cheap models do the high-volume work; expensive models are escalation tools, not the default path."
+**Defense one-liner:** "Groq mutates attacks cheaply; deterministic rules judge first; `gpt-5-nano` only helps when the result is semantically gray."
 
 ---
 
@@ -92,15 +92,15 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 ---
 
-## ADR-008 - PHI-safe observability
+## ADR-008 - PHI-safe Langfuse observability
 
-**The decision:** structured logs record counts, hashes, category, severity, model/provider, verdict, and cost metadata, while raw transcripts and PHI-like content remain deliberate artifacts with controlled access.
+**The decision:** Langfuse is the LLM observability sink for traces, observations, and scores. It records campaign metadata, model/provider, latency, token/cost estimates, refusal count, verdict, severity, judge mode, and approval status. Raw transcripts and PHI-like content remain deliberate artifacts with controlled access unless the deployment explicitly opts into a private Langfuse data boundary.
 
-**Why:** adversarial testing of a healthcare AI target can create sensitive transcripts. Logging everything would turn observability into an exfiltration surface.
+**Why:** adversarial testing of a healthcare AI target can create sensitive transcripts. Logging everything would turn observability into an exfiltration surface. Langfuse is useful because it supports traces and scores for LLM systems, but it must remain metadata-first for this healthcare demo.
 
-**Evidence:** Week 2 already uses a PHI-safe logging policy in `Week2 - Test Suite/docs/PHI-LOGGING-POLICY.md`; AgentForge inherits that posture for run events and reports.
+**Evidence:** Week 2 already uses a PHI-safe logging policy in `Week2 - Test Suite/docs/PHI-LOGGING-POLICY.md`; AgentForge inherits that posture for run events and reports. Langfuse scores can store final verdict, confidence, and approval status without copying raw evidence into general telemetry.
 
-**Defense one-liner:** "We keep the audit trail useful without making logs a second PHI database."
+**Defense one-liner:** "Langfuse tells us what happened and how confident we are, while the sensitive evidence stays in controlled artifacts."
 
 ---
 
@@ -112,6 +112,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 - No clinical decision support for end users.
 - No local-only evidence path for final submission.
 - No claim that LLM-as-judge is sufficient without deterministic checks and goldens.
+- No final high-severity or ambiguous finding without human approval.
 
 ---
 
@@ -123,5 +124,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 - At least three attack categories represented in `evals/`.
 - A target override rejection.
 - Independent judge verdicts with evidence.
+- Human approval audit record for any high-severity or ambiguous finding.
+- Langfuse trace or exported score showing model, judge mode, verdict, confidence, and approval status.
 - Vulnerability reports under `evals/reports/`.
 - Cost report with 100, 1K, 10K, and 100K run projections.

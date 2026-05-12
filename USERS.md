@@ -20,6 +20,8 @@ The maintainer uses AgentForge artifacts to understand vulnerabilities and imple
 
 The human approver reviews high-severity findings, uncertain judge results, dangerous payload classes, and remediation suggestions. This role exists because LLM-generated findings can be wrong, incomplete, or overconfident.
 
+**Approval workflow:** open the `needs_approval` queue, inspect the finding evidence and Langfuse trace/score metadata, choose `approved`, `rejected`, or `needs_more_evidence`, and record a short rationale. Only approved high-severity or ambiguous findings can become final reports or regression cases.
+
 **Primary workflow:** inspect evidence, confirm exploitability and clinical impact, approve report publication or regression inclusion.
 
 ### Report Viewer / Grader

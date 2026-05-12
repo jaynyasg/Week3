@@ -107,8 +107,10 @@ The Week 3 assignment requires more than prompt examples: the platform must be m
 | Web framework | FastAPI service with simple protected operator surface | Reuses Week 2 patterns and deploys cleanly on Render. |
 | Target access | Configured allowlist, not user-supplied arbitrary URLs | Prevents the platform from becoming a public scanner. |
 | Attack artifacts | Versioned fixtures plus JSONL run results and markdown reports on deployed persistent storage | Keeps evals reproducible, reviewable, and available after deploy restarts. |
-| Red Team model | Hosted low-cost provider first, with provider abstraction | Deployment needs hosted inference; local-only models are development fallback only. |
-| Judge design | Deterministic checks first, LLM judge only for semantic gray areas | Reduces cost, improves reproducibility, and avoids self-grading. |
+| Red Team model | Groq `llama-3.1-8b-instant` first, with provider abstraction | Deployment needs hosted inference; Groq gives low-cost, high-speed mutation and can be swapped if refusal behavior or credentials block progress. |
+| Judge design | Deterministic checks first, OpenAI `gpt-5-nano` only for semantic gray areas | Reduces cost, improves reproducibility, avoids self-grading, and separates the judge from the attack generator. |
+| Human approval | High-severity, partial, inconclusive, or LLM-judge-only findings require approval | Prevents uncertain or high-impact evidence from becoming final reports without operator review. |
+| Observability | Langfuse traces and scores, metadata-only by default | Gives model/cost/judge visibility without turning logs into a sensitive transcript store. |
 | Cost control | Hard campaign budget, per-role token estimates, refusal tracking | Prevents runaway testing costs and supports required 100/1K/10K/100K projections. |
 | Documentation | Architecture and defense docs before feature completion | F1 is intentionally first; the build should align to the submission narrative from the start. |
 
@@ -118,7 +120,10 @@ The Week 3 assignment requires more than prompt examples: the platform must be m
 
 ### Resolved During Planning
 
-- Red-team provider for deployed campaigns: plan a provider abstraction and wire one hosted low-cost provider first. Groq Llama 3.1 8B Instant or Gemini Flash-Lite are preferred initial candidates; the final choice can be made by env var and availability during implementation.
+- Red-team provider for deployed campaigns: wire Groq `llama-3.1-8b-instant` first behind a provider abstraction; keep the provider swappable if credentials, rate limits, pricing, or refusal behavior require a fallback.
+- Judge fallback provider: use OpenAI `gpt-5-nano` only after deterministic checks cannot decide.
+- Observability provider: use Langfuse for traces, observations, scores, and human approval status; keep local artifacts authoritative if Langfuse is unavailable.
+- Human approval gate: use finding states `draft`, `needs_approval`, `approved`, `rejected`, `needs_more_evidence`, and `regression_queued`.
 - Target path: use a configured deployed OpenEMR / Clinical Co-Pilot target as the canonical system under test, preferably the OpenEMR-origin/proxied agent path when available. Direct agent URLs can be supported only if explicitly configured as the authorized deployed target.
 - Artifact format: use JSON/YAML case definitions, JSONL run records, and generated markdown vulnerability reports. Pytest/local tests verify platform behavior, not final evidence.
 - Judge validation: seed a small `evals/goldens/` dataset with known-safe and known-unsafe transcripts before relying on an LLM judge for ambiguous cases.
@@ -126,7 +131,6 @@ The Week 3 assignment requires more than prompt examples: the platform must be m
 
 ### Deferred to Implementation
 
-- Exact hosted red-team model name: confirm current API availability, pricing, and refusal behavior when credentials are available.
 - Exact deployed target URLs: fill from deployment environment, not hard-coded source.
 - Exact auth header shape for deployed target calls: derive from the deployed target's demo/auth configuration during implementation.
 - Whether the protected operator surface is HTML templates or a tiny static SPA: choose the smallest deployed surface that supports start/status/artifact retrieval cleanly.
@@ -576,14 +580,18 @@ flowchart TB
 - Modify: `agentforge/http/app.py`
 - Create: `agentforge/http/routes_artifacts.py`
 - Create: `agentforge/http/routes_operator.py`
+- Create: `agentforge/http/routes_approvals.py`
 - Create: `tests/agentforge/test_campaign_routes.py`
 - Create: `tests/agentforge/test_artifact_routes.py`
+- Create: `tests/agentforge/test_approval_routes.py`
 - Create: `tests/agentforge/test_operator_surface.py`
 
 **Approach:**
 - Keep the MVP operator surface simple: authenticated API plus a lightweight HTML/status view if that improves demo clarity.
 - Start campaigns by selecting configured campaign presets, not arbitrary free-form target URLs.
 - Provide run status, latest verdicts, cost estimate, and artifact/report links.
+- Provide an approval queue for findings with `needs_approval` status.
+- Approval decisions must persist finding ID, operator identity, decision, rationale, timestamp, and resulting status.
 - Make the deployed status view demo-friendly without exposing secrets or raw PHI.
 
 **Patterns to follow:**
@@ -594,7 +602,10 @@ flowchart TB
 **Test scenarios:**
 - Happy path: authenticated operator starts a bounded campaign preset.
 - Happy path: operator retrieves run status and report links.
+- Happy path: authenticated operator approves a high-severity finding with rationale and the finding moves toward regression promotion.
+- Edge case: operator can request more evidence for an ambiguous finding without finalizing it.
 - Error path: unauthenticated operator cannot start a campaign or read artifacts.
+- Error path: unauthenticated operator cannot approve findings.
 - Error path: request body cannot override configured target host.
 - Integration: deployed evidence status is visible on a completed campaign.
 
@@ -603,9 +614,9 @@ flowchart TB
 
 ---
 
-### U9. Cost controls, observability, deployment docs, and final evidence
+### U9. Cost controls, Langfuse observability, deployment docs, and final evidence
 
-**Goal:** Finish the operational layer: structured events, cost reporting, deployment runbook, smoke checklist, final cost projections, and submission evidence packaging.
+**Goal:** Finish the operational layer: structured events, Langfuse traces/scores, cost reporting, deployment runbook, smoke checklist, final cost projections, and submission evidence packaging.
 
 **Requirements:** R8, R10, R11, R12; origin F5, F6, AE7, AE8, AE10, AE11.
 
@@ -614,6 +625,7 @@ flowchart TB
 **Files:**
 - Modify: `agentforge/observability/events.py`
 - Modify: `agentforge/observability/metrics.py`
+- Create: `agentforge/observability/langfuse_client.py`
 - Modify: `agentforge/reporting/cost_report.py`
 - Create: `deploy/docs/deployment.md`
 - Create: `deploy/docs/operator-runbook.md`
@@ -621,13 +633,16 @@ flowchart TB
 - Modify: `AI-COST-ANALYSIS.md`
 - Modify: `README.md`
 - Create: `tests/agentforge/test_observability_events.py`
+- Create: `tests/agentforge/test_langfuse_events.py`
 - Create: `tests/agentforge/test_cost_report.py`
 
 **Approach:**
 - Emit structured run events with campaign ID, category, target alias, model/provider, verdict, severity, refusal count, token/cost estimate, and evidence environment.
+- Emit Langfuse traces for each campaign and observations for red-team generation, target execution, deterministic judge, LLM judge fallback, report generation, and budget halts.
+- Emit Langfuse scores for verdict, confidence, severity, judge mode, and approval status.
 - Keep raw prompt/transcript data out of general structured logs; store sensitive artifacts deliberately.
 - Generate cost projections for 100, 1K, 10K, and 100K runs using the same per-role accounting the platform records.
-- Document deployment env vars, secrets, health checks, disable procedure, campaign budget defaults, and target allowlist behavior.
+- Document deployment env vars, Langfuse keys, secrets, health checks, disable procedure, campaign budget defaults, and target allowlist behavior.
 - Package final evidence around deployed runs only.
 
 **Patterns to follow:**
@@ -638,6 +653,8 @@ flowchart TB
 
 **Test scenarios:**
 - Happy path: run completion emits PHI-safe structured event fields.
+- Happy path: Langfuse-enabled run emits metadata-only trace and scores.
+- Edge case: Langfuse outage does not fail the campaign; local artifacts remain authoritative.
 - Happy path: cost report separates Red Team, Judge, Documentation, retries, refusals, and target infrastructure assumptions.
 - Edge case: missing token usage falls back to conservative estimate and is marked estimated.
 - Error path: budget halt emits a halt reason and no target call is made.

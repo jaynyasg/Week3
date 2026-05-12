@@ -67,7 +67,7 @@ The MVP follows a deterministic-first multi-agent slice:
 - Judge Agent scores results independently of the red-team generator.
 - Documentation Agent produces vulnerability reports.
 - Regression Harness stores replayable cases.
-- Observability Layer tracks cost, model/provider, verdicts, and PHI-safe events.
+- Observability Layer uses Langfuse traces/scores plus local artifacts to track cost, model/provider, verdicts, approval status, and PHI-safe events.
 
 ## Development Notes
 
@@ -77,9 +77,10 @@ The deployed platform will require:
 
 - A configured deployed OpenEMR / Clinical Co-Pilot target URL.
 - Operator authentication for campaign start/status/artifact endpoints.
-- A hosted low-cost LLM provider for deployed campaigns.
+- Groq `llama-3.1-8b-instant` for red-team mutation and OpenAI `gpt-5-nano` for limited judge fallback/documentation.
 - Persistent artifact storage for deployed evidence.
 - Hard budget limits for model spend and campaign size.
+- Human approval for high-severity, ambiguous, partial, or LLM-judge-only findings before final report/regression promotion.
 
 ## Non-Goals
 
