@@ -2,8 +2,19 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .pytest-tmp/
+
+# Local dev noise — keep generated artifacts out by default…
 evals/results/*.json
 evals/results/*.jsonl
 evals/results/findings/
 evals/reports/*.md
 evals/regression/*.json
+
+# …but commit canonical submission evidence (run-*, find-* are deterministic IDs from the
+# Orchestrator/ArtifactStore; pinning them here makes the repo the source of truth for review).
+!evals/results/run-*.json
+!evals/results/runs.jsonl
+!evals/results/findings/
+!evals/results/findings/find-*.json
+!evals/reports/find-*.md
+!evals/regression/find-*.json
