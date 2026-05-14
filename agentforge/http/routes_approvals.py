@@ -51,6 +51,9 @@ def approve_finding(
     if body.decision == FindingStatus.APPROVED:
         store.save_regression_case(finding.finding_id, build_regression_case(finding))
         finding.status = FindingStatus.REGRESSION_QUEUED
+    else:
+        store.delete_regression_case(finding.finding_id)
     store.save_finding(finding)
+    store.update_run_finding(finding)
     store.save_report(finding.finding_id, render_vulnerability_report(finding))
     return finding.model_dump(mode="json")

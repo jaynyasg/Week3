@@ -68,6 +68,19 @@ class ArtifactStore:
             finding.model_dump(mode="json"),
         )
 
+    def update_run_finding(self, finding: Finding) -> Path | None:
+        path = self.results_dir / f"{finding.run_id}.json"
+        if not path.exists():
+            return None
+        run = RunArtifact.model_validate_json(path.read_text(encoding="utf-8"))
+        for index, existing in enumerate(run.findings):
+            if existing.finding_id == finding.finding_id:
+                run.findings[index] = finding
+                break
+        else:
+            run.findings.append(finding)
+        return self._write_json(path, run.model_dump(mode="json"))
+
     def get_finding(self, finding_id: str) -> Finding:
         path = self.findings_dir / f"{finding_id}.json"
         if not path.exists():
@@ -90,6 +103,13 @@ class ArtifactStore:
 
     def save_regression_case(self, finding_id: str, data: dict[str, Any]) -> Path:
         return self._write_json(self.regression_dir / f"{finding_id}.json", data)
+
+    def delete_regression_case(self, finding_id: str) -> bool:
+        path = self.regression_dir / f"{finding_id}.json"
+        if not path.exists():
+            return False
+        path.unlink()
+        return True
 
     def safe_artifact_path(self, relative_path: str) -> Path:
         candidate = (self.root / relative_path).resolve()

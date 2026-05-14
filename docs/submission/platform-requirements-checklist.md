@@ -26,7 +26,7 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | Red Team capability: target multi-turn attack sequences, not only single prompts. | `evals/cases/cross_patient_history_injection.yaml`, run artifacts | Partial | Ensure final run/report includes multi-turn evidence or explicitly marks the multi-turn case status. |
 | Judge capability: evaluate attack success with consistent criteria across runs and versions. | `agentforge/judge/`, `evals/goldens/judge_cases.json`, `tests/agentforge/test_judge_goldens.py` | Partial | Harden false-positive handling and expand goldens for safe refusal, echoed attack text, partial/server-error, and inconclusive cases. |
 | Judge independence: attack generation and attack evaluation must not happen in the same context. | Architecture docs and separate `attacks`, `judge`, and `orchestrator` modules | Partial | Keep final docs explicit that the red-team generator does not self-grade. |
-| Orchestrator capability: prioritize attack surfaces based on coverage gaps and unresolved findings. | Budget/campaign artifacts exist; coverage is described in docs | Partial | Add an operator-visible coverage/priority summary or documented artifact that shows why the next campaign is selected. |
+| Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | Budget/campaign artifacts exist; coverage is described in docs | Partial | Add an operator-visible coverage/priority summary or documented artifact that shows why the next campaign is selected and which category appears weakest. |
 | Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields | Partial | Add final demo/status evidence for budget halt or skip reason; replace `TBD` infrastructure costs. |
 | Orchestrator capability: trigger regression runs when the target changes. | Regression JSON files exist under `evals/regression/` | Missing | Add a replay harness or operator-triggerable regression path and document the target-change trigger. |
 | Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, Groq/OpenAI model choices | Partial | Recheck pricing before final submission and record final assumptions/date. |
@@ -58,6 +58,7 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | PDF question | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
 | Which attack categories have been tested, and how many cases exist per category? | `evals/cases/`, run JSON artifacts | Partial | Add a generated or API-visible summary for category coverage. |
+| Which categories need deeper attack coverage beyond one seed case? | `evals/cases/`, run JSON artifacts | Partial | Track tested case IDs versus available case IDs and feed gaps into Orchestrator recommendations. |
 | What is the current pass/fail rate across all test categories and system versions? | Run verdicts exist in JSON | Partial | Add pass/fail/partial/inconclusive summary by category and target version. |
 | Is the target becoming more or less resilient over time? | Multiple runs exist but no trend summary | Missing | Add resilience trend from runs/regression validations or mark as insufficient data. |
 | Which vulnerabilities are open, in progress, or resolved? | Finding JSON statuses exist | Partial | Normalize statuses into final lanes and expose counts. |
@@ -88,4 +89,3 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 - The cost analysis still has `TBD` infrastructure estimates.
 - There is no recorded final demo video link or social post link.
 - There are two assignment PDFs in the repo root; decide whether the duplicate belongs in the final submission.
-

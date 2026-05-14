@@ -39,7 +39,7 @@ The highest-risk gap is evidence quality. Current artifacts include useful deplo
 - R1. The platform must be explicitly multi-agent: Red Team, Judge, Orchestrator, Documentation Agent, Regression Harness, Observability Layer, and Human Approver have distinct responsibilities, context, inputs, outputs, trust levels, and coordination paths. (Origin R4, R9-R12, R15; PDF Platform Requirements)
 - R2. The Red Team Agent must generate or mutate adversarial inputs, including multi-turn sequences and variants from partial successes, while remaining scoped to allowlisted deployed targets. (Origin R7-R9, R17-R18, R25; AE3, AE4, AE5)
 - R3. The Judge Agent must evaluate independently with consistent criteria, separate response content from echoed attack text, cite evidence, and escalate uncertainty rather than invent certainty. (Origin R10, R21, R24, R27; AE5, AE9)
-- R4. The Orchestrator Agent must prioritize coverage gaps, unresolved/high-severity findings, regressions, refusal rate, and cost signals; it must halt or redirect when spend accumulates without signal and trigger regression replay when the target changes. (Origin R11, R19-R21; AE8, AE9)
+- R4. The Orchestrator Agent must prioritize coverage gaps, weak surfaces learned from prior campaigns, unresolved/high-severity findings, regressions, refusal rate, and cost signals; it must halt or redirect when spend accumulates without signal and trigger regression replay when the target changes. (Origin R11, R19-R21; AE8, AE9)
 - R5. The Documentation Agent must produce professional vulnerability reports with unique ID, severity, clinical impact, minimal reproduction, expected versus observed behavior, remediation direction, current status, fix validation result, and an explicit confidence lane: confirmed or judge-flagged/unconfirmed. (Origin R12, R26, R27)
 - R6. The Regression & Validation Harness must store confirmed exploits in a versioned, queryable format, replay them deterministically, distinguish behavior drift from actual fixes, and flag reappearing vulnerabilities or cross-category regressions. (Origin R20-R21, R26; AE9)
 - R7. The Observability Layer must answer the PDF's required questions: categories tested, cases per category, pass/fail rate by category/version, resilience trend, open/in-progress/resolved vulnerabilities, run cost and cost scaling, and agent activity order. (Origin R20-R22; AE8, AE9)
@@ -407,7 +407,7 @@ flowchart TB
 
 ### U5. Complete Orchestrator coverage, prioritization, and cost redirection
 
-**Goal:** Make the Orchestrator Agent visibly choose campaigns based on coverage gaps, unresolved/high-severity findings, regressions, refusal rate, and budget signals.
+**Goal:** Make the Orchestrator Agent visibly choose campaigns based on coverage gaps, attack coverage depth, learned weak surfaces, unresolved/high-severity findings, regressions, refusal rate, and budget signals.
 
 **Requirements:** R1, R2, R4, R7; origin R11, R17-R21; AE3, AE8, AE10.
 
@@ -425,7 +425,8 @@ flowchart TB
 
 **Approach:**
 - Derive coverage from catalog cases, run exchanges, findings, regression validations, and category metadata.
-- Prioritize untested categories first, then high-severity unresolved findings, then regression replay, then mutation expansion of partial findings.
+- Prioritize untested categories first, then categories that look weakest over time based on vulnerable/partial/error verdicts and unresolved finding status, then regression replay, then mutation expansion of partial findings.
+- Expand attack depth by tracking tested cases versus available cases per category, not only whether a category has been touched once.
 - Record why the Orchestrator selected or skipped each case.
 - Keep budget halts explicit: skipped count, projected cost, cap, and no target calls when halted.
 - Track refusal count as a signal that the Red Team provider may be blocking authorized testing.
@@ -437,6 +438,7 @@ flowchart TB
 
 **Test scenarios:**
 - Happy path: with no prior runs, Orchestrator selects cases from uncovered categories.
+- Happy path: with every category touched once, Orchestrator recommends deeper cases or reruns in the category with the highest weak-surface score.
 - Happy path: with a high-severity needs-approval finding, Orchestrator recommends evidence replay or review before random new mutation.
 - Happy path: with regression-queued findings and a target version change marker, Orchestrator prioritizes regression replay.
 - Edge case: categories with only development evidence remain uncovered for final submission.

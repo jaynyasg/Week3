@@ -61,6 +61,11 @@ class ClinicalCoPilotClient:
             latency_ms = (time.perf_counter() - started) * 1000
             body = self._safe_json(response)
             text = response.text
+            response_summary = {
+                "text_excerpt": text[:2000],
+                "json_keys": sorted(body.keys()),
+            }
+            response_summary.update(self._structured_summary(body))
             return TargetExchange(
                 case_id=case.id,
                 target_alias=target_alias,
@@ -72,10 +77,7 @@ class ClinicalCoPilotClient:
                     "attachment_count": len(case.attachments),
                 },
                 response_status=response.status_code,
-                response_summary={
-                    "text_excerpt": text[:2000],
-                    "json_keys": sorted(body.keys()),
-                },
+                response_summary=response_summary,
                 latency_ms=latency_ms,
             )
         except Exception as exc:
@@ -101,3 +103,49 @@ class ClinicalCoPilotClient:
         except ValueError:
             return {}
         return payload if isinstance(payload, dict) else {"value": payload}
+
+    @staticmethod
+    def _structured_summary(body: dict[str, Any]) -> dict[str, Any]:
+        messages = body.get("messages")
+        assistant_messages: list[str] = []
+        user_messages: list[str] = []
+        if isinstance(messages, list):
+            for message in messages:
+                if not isinstance(message, dict):
+                    continue
+                content = message.get("content")
+                if not isinstance(content, str):
+                    continue
+                if message.get("role") == "assistant":
+                    assistant_messages.append(content[:1000])
+                elif message.get("role") == "user":
+                    user_messages.append(content[:1000])
+
+        summary: dict[str, Any] = {
+            "assistant_messages": assistant_messages,
+            "user_messages": user_messages,
+        }
+
+        assistant_message = body.get("assistant_message")
+        if isinstance(assistant_message, str):
+            summary["assistant_message"] = assistant_message[:1000]
+
+        tool_result_keys = body.get("tool_result_keys")
+        if isinstance(tool_result_keys, list):
+            summary["tool_result_keys"] = [
+                str(key)[:200] for key in tool_result_keys
+            ]
+
+        for key in ("tool_execution_summary", "retrieval_trace"):
+            value = body.get(key)
+            if value:
+                summary[f"{key}_excerpt"] = str(value)[:1000]
+
+        for key in ("extraction_summaries", "evidence_citations"):
+            value = body.get(key)
+            if isinstance(value, list):
+                summary[f"{key}_count"] = len(value)
+                if value:
+                    summary[f"{key}_excerpt"] = str(value[:3])[:1000]
+
+        return summary

@@ -36,6 +36,11 @@ def test_approval_route_promotes_high_severity_finding(settings):
     assert approved.status_code == 200
     assert approved.json()["status"] == "regression_queued"
     assert (settings.artifact_dir / "regression" / f"{finding_id}.json").exists()
+    run_artifact = client.get(
+        f"/operator/artifacts/results/{run['run_id']}.json",
+        headers={"Authorization": "Bearer test-token"},
+    ).json()
+    assert run_artifact["findings"][0]["status"] == "regression_queued"
 
 
 def test_approval_route_allows_request_more_evidence(settings):
@@ -58,3 +63,4 @@ def test_approval_route_allows_request_more_evidence(settings):
 
     assert response.status_code == 200
     assert response.json()["status"] == "needs_more_evidence"
+    assert not (settings.artifact_dir / "regression" / f"{finding_id}.json").exists()
