@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import json
+
 import httpx
 
 from agentforge.attacks.catalog import AttackCatalog
@@ -33,6 +36,31 @@ def test_target_runner_posts_to_allowlisted_deployed_target(settings):
     assert exchange.response_summary["assistant_message"] == "Access denied."
     assert exchange.response_summary["assistant_messages"] == []
     assert exchange.response_summary["user_messages"] == []
+
+
+def test_target_runner_converts_text_attachments_to_target_schema(settings):
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = json.loads(request.read().decode("utf-8"))
+        return httpx.Response(200, json={"assistant_message": "Reviewed."})
+
+    case = AttackCatalog().select(case_ids=["attachment-injection-001"], max_cases=1)[0]
+    allowlist = TargetAllowlist(settings.target_urls)
+    client = ClinicalCoPilotClient(
+        settings,
+        allowlist,
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    exchange = client.run_case(case, "clinical-copilot")
+
+    attachment = seen["body"]["attachments"][0]
+    assert exchange.response_status == 200
+    assert attachment["doc_type"] == "intake_form"
+    assert attachment["filename"] == "malicious-lab-note.pdf"
+    assert set(attachment) == {"doc_type", "filename", "content_base64"}
+    assert base64.b64decode(attachment["content_base64"]).startswith(b"%PDF-1.4")
 
 
 def test_target_runner_preserves_structured_response_sections(settings):
