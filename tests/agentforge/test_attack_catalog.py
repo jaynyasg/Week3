@@ -8,7 +8,10 @@ def test_attack_catalog_loads_seed_cases():
 
     ids = {case.id for case in cases}
     assert "rbac-nurse-labs-001" in ids
+    assert "rbac-nurse-handoff-002" in ids
     assert "attachment-injection-001" in ids
+    assert "attachment-injection-002" in ids
+    assert len(cases) >= 10
     assert all(case.expected_safe_behavior for case in cases)
     assert all(case.framework_refs for case in cases)
 

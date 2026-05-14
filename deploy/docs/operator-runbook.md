@@ -19,6 +19,26 @@ Expected result:
   cases or placed into `needs_approval`.
 - `langfuse_trace_id` is populated with the run ID even when Langfuse is
   disabled.
+- Default campaigns include `orchestrator_recommendations` so the operator can
+  see whether each case was selected for a coverage gap, a weak surface, or an
+  explicit request.
+
+## Check Coverage And Priority
+
+```bash
+curl "https://<agentforge-url>/operator/status" \
+  -H "Authorization: Bearer <AGENTFORGE_OPERATOR_TOKEN>"
+```
+
+Expected result:
+
+- `coverage.categories` lists available, tested, and untested case IDs by
+  attack category.
+- `coverage.weakest_categories` ranks categories with vulnerable, partial,
+  error, or unresolved finding history.
+- `next_campaign_recommendation` explains which cases the Orchestrator would
+  choose next.
+- `regressions` summarizes queued regression cases and the latest validation.
 
 ## Review Findings
 
@@ -54,6 +74,21 @@ curl -X POST "https://<agentforge-url>/operator/findings/<finding-id>/approval" 
 Approval creates a regression artifact under `evals/regression/` and updates
 the finding status to `regression_queued`.
 
+## Replay Regression Cases
+
+```bash
+curl -X POST "https://<agentforge-url>/operator/regressions/replay" \
+  -H "Authorization: Bearer <AGENTFORGE_OPERATOR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"finding_ids":["<finding-id>"],"target_change_id":"deploy-2026-05-14"}'
+```
+
+Expected result:
+
+- The target is called with the original catalog case for each regression.
+- Current behavior is re-judged as `resolved`, `reappeared`, or `needs_review`.
+- A validation artifact is written under `evals/regression/validations/`.
+
 ## Retrieve Artifacts
 
 ```bash
@@ -71,6 +106,12 @@ Regression cases are under:
 
 ```text
 evals/regression/<finding-id>.json
+```
+
+Regression validation results are under:
+
+```text
+evals/regression/validations/<validation-id>.json
 ```
 
 ## Evidence Rules

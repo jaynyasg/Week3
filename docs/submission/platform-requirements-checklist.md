@@ -26,9 +26,9 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | Red Team capability: target multi-turn attack sequences, not only single prompts. | `evals/cases/cross_patient_history_injection.yaml`, run artifacts | Partial | Ensure final run/report includes multi-turn evidence or explicitly marks the multi-turn case status. |
 | Judge capability: evaluate attack success with consistent criteria across runs and versions. | `agentforge/judge/`, `evals/goldens/judge_cases.json`, `tests/agentforge/test_judge_goldens.py` | Partial | Harden false-positive handling and expand goldens for safe refusal, echoed attack text, partial/server-error, and inconclusive cases. |
 | Judge independence: attack generation and attack evaluation must not happen in the same context. | Architecture docs and separate `attacks`, `judge`, and `orchestrator` modules | Partial | Keep final docs explicit that the red-team generator does not self-grade. |
-| Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | Budget/campaign artifacts exist; coverage is described in docs | Partial | Add an operator-visible coverage/priority summary or documented artifact that shows why the next campaign is selected and which category appears weakest. |
+| Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | `agentforge/orchestrator/coverage.py`, `agentforge/orchestrator/priority.py`, default campaign `selection_reasons`, run `orchestrator_recommendations`, `GET /operator/status` | Partial | Deploy latest code, run/capture final operator status and campaign JSON showing recommendation reasons and weakest/gap categories. |
 | Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields | Partial | Add final demo/status evidence for budget halt or skip reason; replace `TBD` infrastructure costs. |
-| Orchestrator capability: trigger regression runs when the target changes. | Regression JSON files exist under `evals/regression/` | Missing | Add a replay harness or operator-triggerable regression path and document the target-change trigger. |
+| Orchestrator capability: trigger regression runs when the target changes. | `POST /operator/regressions/replay`, `evals/regression/*.json`, `evals/regression/validations/*.json`, `deploy/docs/operator-runbook.md` | Partial | Deploy latest code and capture final replay validation artifact after a target-change marker. |
 | Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, Groq/OpenAI model choices | Partial | Recheck pricing before final submission and record final assumptions/date. |
 
 ## Documentation Agent
@@ -36,35 +36,35 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | PDF report requirement | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
 | Unique identifier and severity rating. | `evals/reports/*.md`, `evals/results/findings/*.json` | Partial | Ensure every final report uses the same finding ID and severity as canonical finding JSON. |
-| Clear vulnerability description and clinical impact. | Existing report markdown | Partial | Upgrade final reports so impact is explicit and not just a judge summary. |
-| Minimal reproducible attack sequence. | Run JSON exchanges and reports | Partial | Ensure each final report has a concise reproduction path, target role, headers/context, and case ID. |
-| Observed versus expected behavior. | Existing reports include some observed evidence | Partial | Make expected/observed behavior mandatory in report generation. |
-| Recommended remediation approach. | Existing reports include recommendations | Partial | Ensure remediation is specific enough for the Week 2 target code path or operational control. |
-| Current status and fix validation results. | Finding JSON statuses and regression files | Partial | Regenerate reports after approval/replay so status and validation are current. |
-| Senior engineer can reproduce, validate, and fix from the report alone. | Reports exist, but several findings are still `needs_approval` or development-only | Partial | Curate at least three final reports with explicit lanes: confirmed or judge-flagged/unconfirmed. |
+| Clear vulnerability description and clinical impact. | `agentforge/reporting/vulnerability_report.py` now renders a dedicated clinical impact section by category | Partial | Regenerate final reports from curated deployed findings. |
+| Minimal reproducible attack sequence. | Reports now include target, run ID, case ID, role, patient context, attachment count, and campaign/replay path | Partial | Regenerate final reports from curated deployed findings. |
+| Observed versus expected behavior. | New findings store `expected_safe_behavior`; reports render expected and observed behavior sections | Partial | Regenerate final reports from curated deployed findings. |
+| Recommended remediation approach. | Reports now render category-specific remediation guidance | Partial | Confirm final report wording against the deployed target behavior. |
+| Current status and fix validation results. | Reports now render approval status and replay/validation guidance | Partial | Regenerate reports after approval/replay so status and validation are current. |
+| Senior engineer can reproduce, validate, and fix from the report alone. | Report generator now includes reproduction, impact, expected/observed behavior, remediation, and validation sections | Partial | Curate at least three final reports with explicit lanes: confirmed or judge-flagged/unconfirmed. |
 
 ## Regression And Validation Harness
 
 | PDF requirement | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
 | Store confirmed exploits in a versioned, queryable format. | `evals/regression/*.json` | Partial | Ensure only deployed confirmed findings are promoted to final regression inventory, or mark non-final files clearly. |
-| Run full regression suite automatically when triggered by the Orchestrator. | No replay route or harness is visible in final evidence yet | Missing | Implement an operator-triggered replay path and document the target-change trigger. |
-| Detect when a previously fixed vulnerability has reappeared. | Planned in final plan U4 | Missing | Store validation artifacts with current and prior verdict/status. |
-| Flag when one fix introduces a regression in another category. | Planned in final plan U4/U6 | Missing | Summarize cross-category validation status in observability output. |
+| Run full regression suite automatically when triggered by the Orchestrator. | `POST /operator/regressions/replay` replays stored regression cases and can be scoped by finding IDs or run across the queue | Partial | Capture a final deployed replay response/validation artifact. |
+| Detect when a previously fixed vulnerability has reappeared. | Regression validation results store prior verdict, current verdict, and `resolved`/`reappeared`/`needs_review` status | Partial | Run final replay against deployed target after latest deploy. |
+| Flag when one fix introduces a regression in another category. | Replay summary and `GET /operator/status` expose validation counts; per-result categories are stored in validation artifacts | Partial | Capture a multi-category replay artifact or note insufficient final regression inventory. |
 | Distinguish true fix from model behavior drift. | Architecture docs mention this risk | Partial | Regression criteria must check target behavior against explicit expected safe behavior, not only changed text. |
 
 ## Observability Layer
 
 | PDF question | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Which attack categories have been tested, and how many cases exist per category? | `evals/cases/`, run JSON artifacts | Partial | Add a generated or API-visible summary for category coverage. |
-| Which categories need deeper attack coverage beyond one seed case? | `evals/cases/`, run JSON artifacts | Partial | Track tested case IDs versus available case IDs and feed gaps into Orchestrator recommendations. |
-| What is the current pass/fail rate across all test categories and system versions? | Run verdicts exist in JSON | Partial | Add pass/fail/partial/inconclusive summary by category and target version. |
-| Is the target becoming more or less resilient over time? | Multiple runs exist but no trend summary | Missing | Add resilience trend from runs/regression validations or mark as insufficient data. |
-| Which vulnerabilities are open, in progress, or resolved? | Finding JSON statuses exist | Partial | Normalize statuses into final lanes and expose counts. |
+| Which attack categories have been tested, and how many cases exist per category? | `GET /operator/status` coverage summary, `agentforge/orchestrator/coverage.py`, `evals/cases/` | Partial | Capture final deployed status output after the latest deploy. |
+| Which categories need deeper attack coverage beyond one seed case? | Ten seed/depth cases in `evals/cases/`; coverage tracks tested versus available case IDs and feeds `next_campaign_recommendation` | Partial | Capture final deployed recommendation output after the latest deploy. |
+| What is the current pass/fail rate across all test categories and system versions? | Coverage summary includes verdict counts by category and global totals | Partial | Add target version/change marker or note insufficient longitudinal data in final demo/docs. |
+| Is the target becoming more or less resilient over time? | Regression validations and run history can show resolved/reappeared counts over time | Partial | Capture final replay artifact or mark longitudinal trend as insufficient data if only one validation exists. |
+| Which vulnerabilities are open, in progress, or resolved? | Finding JSON statuses plus coverage `finding_status_counts` | Partial | Normalize final lanes after approval/replay and capture final status counts. |
 | How much did this test run cost, and at what rate is cost scaling? | Run `estimated_cost_usd`; `AI-COST-ANALYSIS.md` | Partial | Complete infrastructure estimates and final actual-spend table. |
 | What is each agent doing, and in what order did it happen? | Langfuse metadata and run artifacts are described | Partial | Ensure local artifacts or operator status show ordered activity when Langfuse is unavailable. |
-| Observability is the Orchestrator data substrate, not just a human dashboard. | Architecture docs describe this | Partial | Wire coverage/status summaries into orchestrator priority decisions. |
+| Observability is the Orchestrator data substrate, not just a human dashboard. | Coverage/status summaries now feed default campaign selection and are exposed through `GET /operator/status` | Partial | Deploy latest code and capture final status/campaign artifacts as submission evidence. |
 
 ## Submission Requirements
 

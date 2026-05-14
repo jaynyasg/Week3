@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
+from typing import Any
+from uuid import uuid4
 
 from agentforge.attacks.budget import BudgetLedger, estimate_redteam_cost
 from agentforge.attacks.catalog import AttackCatalog
@@ -155,7 +158,12 @@ class CampaignExecutor:
                     confidence=judge_result.confidence,
                     judge_mode=judge_result.judge_mode,
                     rationale=judge_result.rationale,
-                    evidence=judge_result.evidence,
+                    evidence=judge_result.evidence
+                    | {
+                        "expected_safe_behavior": provider_result.case.expected_safe_behavior,
+                        "target_role": provider_result.case.target_role,
+                        "attack_tags": provider_result.case.tags,
+                    },
                 ).with_default_status()
                 run.findings.append(finding)
                 self.store.save_finding(finding)
@@ -179,3 +187,96 @@ class CampaignExecutor:
         self.store.save_run(run)
         log_agentforge_event(_LOG, "campaign_completed", fields=build_run_event(run))
         return run
+
+    def replay_regressions(
+        self,
+        *,
+        finding_ids: list[str] | None = None,
+        target_change_id: str | None = None,
+    ) -> dict[str, Any]:
+        self.allowlist.require_any()
+        target_alias = self.settings.default_target_alias
+        if target_alias is None:
+            raise ValueError("target alias is required")
+        self.allowlist.resolve(target_alias)
+
+        cases_by_id = {case.id: case for case in self.catalog.load_cases()}
+        regression_cases = self.store.list_regression_cases(finding_ids)
+        validation = {
+            "validation_id": f"regval-{uuid4().hex[:12]}",
+            "target_alias": target_alias,
+            "evidence_environment": self.settings.evidence_environment,
+            "target_change_id": target_change_id,
+            "created_at": datetime.now(UTC).isoformat(),
+            "requested_finding_ids": finding_ids or [],
+            "results": [],
+            "summary": {
+                "total": 0,
+                "resolved": 0,
+                "reappeared": 0,
+                "needs_review": 0,
+                "missing_case": 0,
+            },
+        }
+
+        for regression_case in regression_cases:
+            validation["summary"]["total"] += 1
+            case_id = regression_case.get("case_id", "")
+            finding_id = regression_case.get("finding_id", "")
+            case = cases_by_id.get(case_id)
+            if case is None:
+                validation["summary"]["missing_case"] += 1
+                validation["results"].append(
+                    {
+                        "finding_id": finding_id,
+                        "case_id": case_id,
+                        "category": regression_case.get("category"),
+                        "prior_verdict": regression_case.get("verdict"),
+                        "current_verdict": None,
+                        "status": "missing_case",
+                        "rationale": "Regression case references an attack case that is not in the current catalog.",
+                    }
+                )
+                continue
+
+            exchange = self.target_client.run_case(case, target_alias)
+            judge_result = self.deterministic_judge.evaluate(case, exchange)
+            if judge_result.verdict == Verdict.INCONCLUSIVE:
+                judge_result = self.llm_judge.evaluate(case, exchange)
+
+            if judge_result.verdict == Verdict.SAFE:
+                status = "resolved"
+            elif judge_result.verdict == Verdict.INCONCLUSIVE:
+                status = "needs_review"
+            else:
+                status = "reappeared"
+            validation["summary"][status] += 1
+            validation["results"].append(
+                {
+                    "finding_id": finding_id,
+                    "case_id": case_id,
+                    "category": case.category,
+                    "prior_verdict": regression_case.get("verdict"),
+                    "current_verdict": judge_result.verdict.value,
+                    "status": status,
+                    "severity": judge_result.severity,
+                    "confidence": judge_result.confidence,
+                    "judge_mode": judge_result.judge_mode,
+                    "rationale": judge_result.rationale,
+                    "exchange": exchange.model_dump(mode="json"),
+                    "evidence": judge_result.evidence,
+                }
+            )
+
+        self.store.save_regression_validation(validation)
+        log_agentforge_event(
+            _LOG,
+            "regression_replay_completed",
+            fields={
+                "validation_id": validation["validation_id"],
+                "target_alias": target_alias,
+                "evidence_environment": self.settings.evidence_environment,
+                **validation["summary"],
+            },
+        )
+        return validation

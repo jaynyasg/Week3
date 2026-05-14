@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from agentforge.models.finding import Finding, FindingStatus
 from agentforge.models.run_artifact import RunArtifact
@@ -19,6 +19,7 @@ class ArtifactStore:
         self.findings_dir = self.results_dir / "findings"
         self.reports_dir = self.root / "reports"
         self.regression_dir = self.root / "regression"
+        self.regression_validations_dir = self.regression_dir / "validations"
         self.goldens_dir = self.root / "goldens"
         self.ensure()
 
@@ -29,6 +30,7 @@ class ArtifactStore:
             self.findings_dir,
             self.reports_dir,
             self.regression_dir,
+            self.regression_validations_dir,
             self.goldens_dir,
         ]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -114,6 +116,33 @@ class ArtifactStore:
 
     def save_regression_case(self, finding_id: str, data: dict[str, Any]) -> Path:
         return self._write_json(self.regression_dir / f"{finding_id}.json", data)
+
+    def list_regression_cases(
+        self,
+        finding_ids: Iterable[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        requested = set(finding_ids or [])
+        cases: list[dict[str, Any]] = []
+        for path in sorted(self.regression_dir.glob("*.json")):
+            if requested and path.stem not in requested:
+                continue
+            cases.append(json.loads(path.read_text(encoding="utf-8")))
+        return cases
+
+    def save_regression_validation(self, data: dict[str, Any]) -> Path:
+        validation_id = data.get("validation_id")
+        if not validation_id:
+            raise ValueError("validation_id is required")
+        return self._write_json(
+            self.regression_validations_dir / f"{validation_id}.json",
+            data,
+        )
+
+    def list_regression_validations(self) -> list[dict[str, Any]]:
+        validations: list[dict[str, Any]] = []
+        for path in sorted(self.regression_validations_dir.glob("*.json")):
+            validations.append(json.loads(path.read_text(encoding="utf-8")))
+        return validations
 
     def delete_regression_case(self, finding_id: str) -> bool:
         path = self.regression_dir / f"{finding_id}.json"

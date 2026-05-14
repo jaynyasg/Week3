@@ -10,6 +10,7 @@ from agentforge.http.auth import (
     get_store,
     require_operator,
 )
+from agentforge.http.schemas import RegressionReplayRequest
 from agentforge.models.campaign import CampaignStartRequest
 from agentforge.orchestrator.coverage import build_coverage_summary
 from agentforge.orchestrator.priority import recommend_next_cases
@@ -29,6 +30,7 @@ def operator_home(operator: str = Depends(require_operator)) -> str:
     <ul>
       <li><code>POST /operator/campaigns</code> starts a bounded campaign.</li>
       <li><code>GET /operator/findings?status=needs_approval</code> reviews findings.</li>
+      <li><code>POST /operator/regressions/replay</code> replays approved regression cases.</li>
       <li><code>GET /operator/status</code> shows deployment readiness.</li>
     </ul>
   </main>
@@ -50,6 +52,8 @@ def operator_status(
         store.list_findings(),
         evidence_environment=settings.evidence_environment,
     )
+    regression_validations = store.list_regression_validations()
+    latest_validation = regression_validations[-1] if regression_validations else None
     return {
         "operator": operator,
         "targets": sorted(settings.target_urls),
@@ -65,6 +69,17 @@ def operator_status(
             coverage,
             max_cases=settings.max_cases_per_campaign,
         ),
+        "regressions": {
+            "case_count": len(store.list_regression_cases()),
+            "validation_count": len(regression_validations),
+            "latest_validation": {
+                "validation_id": latest_validation.get("validation_id"),
+                "target_change_id": latest_validation.get("target_change_id"),
+                "summary": latest_validation.get("summary", {}),
+            }
+            if latest_validation
+            else None,
+        },
     }
 
 
@@ -82,6 +97,25 @@ def start_campaign(
     metrics.inc("campaigns_total")
     metrics.inc("findings_total", len(run.findings))
     return run.model_dump(mode="json") | {"operator": operator}
+
+
+@router.post("/operator/regressions/replay")
+def replay_regressions(
+    body: RegressionReplayRequest,
+    operator: str = Depends(require_operator),
+    executor=Depends(get_executor),
+    metrics=Depends(get_metrics),
+):
+    try:
+        validation = executor.replay_regressions(
+            finding_ids=body.finding_ids or None,
+            target_change_id=body.target_change_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    metrics.inc("regression_replays_total")
+    metrics.inc("regression_replay_cases_total", validation["summary"]["total"])
+    return validation | {"operator": operator}
 
 
 @router.get("/operator/runs/{run_id}")

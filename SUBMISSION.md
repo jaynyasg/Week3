@@ -53,9 +53,9 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 ## Final Blockers
 
 1. Harden judge evidence handling so safe refusals that echo attack text do not become confirmed vulnerability reports.
-2. Reconcile finding lifecycle drift across finding JSON, report markdown, regression JSON, and approval history.
-3. Add regression replay and validation status, not just stored regression case files.
-4. Add an observability summary that answers the PDF questions without opening source code.
+2. Regenerate curated final reports after approval/replay so report markdown matches finding JSON, regression JSON, and approval history.
+3. Deploy and capture regression replay validation status, not just stored regression case files.
+4. Deploy and capture the new operator coverage/priority summary, then add regression trend/status evidence.
 5. Replace cost-analysis `TBD` infrastructure estimates with dated assumptions.
 6. Run a fresh final deployed campaign or replay after the final code deploy.
 7. Curate at least three final vulnerability reports across confirmed and clearly judge-flagged lanes.

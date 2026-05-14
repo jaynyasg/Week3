@@ -93,8 +93,8 @@ The MVP follows a deterministic-first multi-agent slice:
 - Deployed Target Runner calls only the allowlisted deployed target.
 - Judge Agent scores results independently of the red-team generator.
 - Documentation Agent produces vulnerability reports.
-- Regression Harness stores replayable cases.
-- Observability Layer uses Langfuse traces/scores plus local artifacts to track cost, model/provider, verdicts, approval status, and PHI-safe events.
+- Regression Harness stores replayable cases and exposes an authenticated replay endpoint for target-change validation.
+- Observability Layer uses Langfuse traces/scores plus local artifacts and `GET /operator/status` coverage summaries to track cost, model/provider, verdicts, approval status, weak surfaces, regression status, and PHI-safe events.
 
 ## Development Notes
 

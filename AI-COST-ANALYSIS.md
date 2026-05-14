@@ -1,6 +1,6 @@
 # AgentForge AI Cost Analysis
 
-**Status:** Planning baseline for Week 3. Prices checked 2026-05-12; recheck vendor prices before final submission.
+**Status:** Final-submission baseline. Prices rechecked 2026-05-14 against official vendor pages; recheck again only if the submission date moves or account plans change.
 
 ## Cost Principles
 
@@ -36,6 +36,12 @@
 | --- | ---: | ---: | --- |
 | Groq `llama-3.1-8b-instant` | $0.05 / 1M tokens | $0.08 / 1M tokens | Red Team Agent default |
 | OpenAI `gpt-5-nano` | $0.05 / 1M tokens | $0.40 / 1M tokens | Judge fallback and documentation drafting |
+
+## Infrastructure Assumptions
+
+These estimates are monthly incremental AgentForge platform costs, not the already-deployed Week 2 target's hosting cost. Render pricing checked on 2026-05-14 lists web services from Free, Starter at $7/month, Standard at $25/month, and persistent disks at $0.25/GB/month. Render bandwidth is included up to the plan allowance and then metered; the estimates below assume metadata-heavy artifacts and no unusual media or transcript downloads.
+
+Langfuse pricing checked on 2026-05-14 lists a free Hobby path and Core pricing with a $29/month base plus graduated usage; the MVP uses metadata-only traces, so classroom/demo use can stay on free or credit-covered usage unless trace volume grows materially. If Langfuse Core is required, add $29/month plus the published usage tier to the infrastructure estimate.
 
 ## Per-Run Cost Model
 
@@ -76,10 +82,10 @@ These estimates cover LLM usage only. Infrastructure is tracked separately becau
 
 | Runs | Architecture note | LLM estimate | Infrastructure estimate | Notes |
 | ---: | --- | ---: | ---: | --- |
-| 100 | Single deployed AgentForge service, persistent artifact storage | ~$0.02 | TBD | MVP demo scale |
-| 1,000 | Same service, stricter budget caps and batch scheduling | ~$0.19 | TBD | Week-scale campaign |
-| 10,000 | Queueing, provider rate-limit handling, artifact lifecycle policy | ~$1.88 | TBD | Larger regression suite |
-| 100,000 | Batch jobs, reserved capacity or negotiated pricing, stronger storage lifecycle | ~$18.81 | TBD | Production-scale only |
+| 100 | Single deployed AgentForge service, persistent artifact storage | ~$0.02 | $0.25-$7.25/mo | MVP demo scale; Free compute plus 1 GB disk, or Starter to avoid sleep. |
+| 1,000 | Same service, stricter budget caps and batch scheduling | ~$0.19 | ~$7.25/mo | Starter web service plus 1 GB disk. |
+| 10,000 | Queueing, provider rate-limit handling, artifact lifecycle policy | ~$1.88 | ~$26.25/mo | Standard web service plus 5 GB disk. |
+| 100,000 | Batch jobs, reserved capacity or negotiated pricing, stronger storage lifecycle | ~$18.81 | ~$56.25+/mo | Two Standard-scale services/workers plus 25 GB disk; add bandwidth/Langfuse Core if usage exceeds included tiers. |
 
 Calculation basis per run:
 
