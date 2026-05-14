@@ -70,11 +70,11 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 
 | PDF deliverable | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Repository includes setup guide, architecture overview, deployed link, and run instructions. | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md` | Partial | Add final checklist links and push final branch. |
+| Repository includes setup guide, architecture overview, deployed link, and run instructions. | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md` | Partial | Add final evidence IDs and push final `main`. |
 | Threat model with full attack surface map and key-risk summary. | `THREAT_MODEL.md` | Partial | Review after final evidence to align highest-risk categories. |
 | User doc with workflows and automation justification. | `USERS.md` | Partial | Review after final evidence for final user/report workflow accuracy. |
 | Architecture doc with summary, agent roles, communication, orchestration, regression harness, observability, tradeoffs, and diagram. | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Partial | Final-pass stale MVP language and make regression/observability claims match implementation. |
-| Demo video, 3-5 minutes, showing live attacks against target. | `deploy/docs/demo-script.md` | External | Record and link final video after final run/report curation. |
+| Demo video, 3-5 minutes, showing live attacks against target. | `deploy/docs/final-demo-script.md`, `deploy/docs/final-demo-shot-list.md` | External | Record and link final video after final run/report curation. |
 | Eval dataset with results across at least three attack categories. | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Partial | Curate final deployed run artifacts and exclude development runs from final claims. |
 | Minimum three distinct vulnerability reports. | `evals/reports/*.md` | Partial | Approve/reject/replay findings and produce at least three defensible final reports across confirmed and judge-flagged lanes. |
 | AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` includes LLM estimates, infrastructure ranges, and 2026-05-14 pricing assumptions | Partial | Update only if final deployed runs use live provider mode or account plans change. |

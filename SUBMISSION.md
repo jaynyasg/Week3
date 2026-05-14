@@ -11,6 +11,8 @@
 | Platform requirements checklist | `docs/submission/platform-requirements-checklist.md` |
 | Operator runbook | `deploy/docs/operator-runbook.md` |
 | Deployment runbook | `deploy/docs/mvp-submission-runbook.md` |
+| Final submission runbook | `deploy/docs/final-submission-runbook.md` |
+| Final demo script | `deploy/docs/final-demo-script.md` |
 | Demo shot list | `deploy/docs/final-demo-shot-list.md` |
 | Final evidence sweep note | `deploy/docs/final-evidence-sweep.md` |
 | Social post draft | `deploy/docs/social-post.md` |
@@ -42,11 +44,11 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 
 | PDF deliverable | Current evidence | Status |
 | --- | --- | --- |
-| GitHub/GitLab repository with setup guide, architecture overview, deployed link, and run instructions | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, deployed links above | Mostly ready; update final checklist links and commit/push final artifacts. |
+| GitHub/GitLab repository with setup guide, architecture overview, deployed link, and run instructions | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md`, deployed links above | Mostly ready; update final evidence IDs and commit/push final artifacts. |
 | Threat model | `THREAT_MODEL.md` | Present; updated for final attack families and AgentForge controls. |
 | User doc | `USERS.md` | Present; updated for coverage/weak-surface and regression workflows. |
 | Architecture doc | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Present; updated for implemented orchestration, replay, and observability behavior. |
-| Demo video, 3-5 minutes | `deploy/docs/demo-script.md`, `deploy/docs/final-demo-shot-list.md` | Not recorded; script and shot list are ready for final evidence capture. |
+| Demo video, 3-5 minutes | `deploy/docs/final-demo-script.md`, `deploy/docs/final-demo-shot-list.md` | Not recorded; script and shot list are ready for final evidence capture. |
 | Eval dataset across at least three attack categories | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Present; needs final deployed evidence sweep and curated status. |
 | Minimum three vulnerability reports | `evals/reports/*.md` | Reports exist; final submission needs at least three defensible reports with confirmed or clearly judge-flagged lanes. |
 | AI cost analysis at 100 / 1K / 10K / 100K runs | `AI-COST-ANALYSIS.md` | Mostly ready; update only if final live-provider runs or hosting plans change. |

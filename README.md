@@ -139,7 +139,9 @@ AGENTFORGE_ARTIFACT_DIR=/data/agentforge
 The Render blueprint in `render.yaml` mounts persistent storage at `/data/agentforge` and sets `AGENTFORGE_ARTIFACT_DIR` to match (so the image’s baked-in case catalog under `/app/evals/cases` is not hidden by the disk).
 
 Final submission control: `SUBMISSION.md` and `docs/submission/platform-requirements-checklist.md`.
-Submission runbook (env vars, smoke, evidence, F1-F6 mapping): `deploy/docs/mvp-submission-runbook.md`.
+MVP submission runbook (env vars, smoke, evidence, F1-F6 mapping): `deploy/docs/mvp-submission-runbook.md`.
+Final submission runbook: `deploy/docs/final-submission-runbook.md`.
+Final demo script and shot list: `deploy/docs/final-demo-script.md` and `deploy/docs/final-demo-shot-list.md`.
 Also see `deploy/docs/deployment.md`, `deploy/docs/smoke-checklist.md`, `deploy/docs/operator-runbook.md`, and `deploy/scripts/Deploy-Smoke.ps1`.
 
 ## Non-Goals

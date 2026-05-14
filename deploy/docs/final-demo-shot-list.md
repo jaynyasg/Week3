@@ -1,6 +1,6 @@
 # AgentForge Final Demo Shot List
 
-Use this checklist immediately before recording the 3-5 minute final demo.
+Use this checklist with `deploy/docs/final-demo-script.md` immediately before recording the 3-5 minute final demo.
 
 ## Must Show
 
