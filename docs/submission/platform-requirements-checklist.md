@@ -27,9 +27,9 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | Judge capability: evaluate attack success with consistent criteria across runs and versions. | `agentforge/judge/`, `evals/goldens/judge_cases.json`, `tests/agentforge/test_judge_goldens.py` | Partial | Harden false-positive handling and expand goldens for safe refusal, echoed attack text, partial/server-error, and inconclusive cases. |
 | Judge independence: attack generation and attack evaluation must not happen in the same context. | Architecture docs and separate `attacks`, `judge`, and `orchestrator` modules | Partial | Keep final docs explicit that the red-team generator does not self-grade. |
 | Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | `agentforge/orchestrator/coverage.py`, `agentforge/orchestrator/priority.py`, default campaign `selection_reasons`, run `orchestrator_recommendations`, `GET /operator/status` | Partial | Deploy latest code, run/capture final operator status and campaign JSON showing recommendation reasons and weakest/gap categories. |
-| Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields | Partial | Add final demo/status evidence for budget halt or skip reason; replace `TBD` infrastructure costs. |
+| Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields, budget-halt tests | Partial | Add final demo/status evidence for budget halt or skip reason. |
 | Orchestrator capability: trigger regression runs when the target changes. | `POST /operator/regressions/replay`, `evals/regression/*.json`, `evals/regression/validations/*.json`, `deploy/docs/operator-runbook.md` | Partial | Deploy latest code and capture final replay validation artifact after a target-change marker. |
-| Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, Groq/OpenAI model choices | Partial | Recheck pricing before final submission and record final assumptions/date. |
+| Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, Groq/OpenAI model choices, 2026-05-14 pricing recheck | Partial | Recheck only if provider pricing or account plans change before submission. |
 
 ## Documentation Agent
 
@@ -77,7 +77,7 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | Demo video, 3-5 minutes, showing live attacks against target. | `deploy/docs/demo-script.md` | External | Record and link final video after final run/report curation. |
 | Eval dataset with results across at least three attack categories. | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Partial | Curate final deployed run artifacts and exclude development runs from final claims. |
 | Minimum three distinct vulnerability reports. | `evals/reports/*.md` | Partial | Approve/reject/replay findings and produce at least three defensible final reports across confirmed and judge-flagged lanes. |
-| AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` | Partial | Replace infrastructure `TBD` values and update final actual-spend language. |
+| AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` includes LLM estimates, infrastructure ranges, and 2026-05-14 pricing assumptions | Partial | Update only if final deployed runs use live provider mode or account plans change. |
 | Deployed application with adversarial platform running live tests against deployed target. | AgentForge and target Render URLs; current deployed run artifacts | Partial | Run final smoke and final deployed campaign after last code deploy. |
 | Final social post on X or LinkedIn tagging `@GauntletAI`. | Not present | External | Draft post in repo and publish/link before final submission. |
 
@@ -86,6 +86,6 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 - Some report and regression artifacts exist for findings that are still `needs_approval`, creating lifecycle drift.
 - At least two deployed findings may be deterministic judge false positives caused by unsafe terms in echoed prompt text.
 - Development-only approved findings must not be counted as final deployed vulnerabilities.
-- The cost analysis still has `TBD` infrastructure estimates.
+- Cost analysis is current as of 2026-05-14; update only if final live-provider runs or hosting plans change.
 - There is no recorded final demo video link or social post link.
 - There are two assignment PDFs in the repo root; decide whether the duplicate belongs in the final submission.

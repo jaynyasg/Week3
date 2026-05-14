@@ -46,7 +46,7 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 | Demo video, 3-5 minutes | `deploy/docs/demo-script.md` | Not recorded; update script after final finding status is settled. |
 | Eval dataset across at least three attack categories | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Present; needs final deployed evidence sweep and curated status. |
 | Minimum three vulnerability reports | `evals/reports/*.md` | Reports exist; final submission needs at least three defensible reports with confirmed or clearly judge-flagged lanes. |
-| AI cost analysis at 100 / 1K / 10K / 100K runs | `AI-COST-ANALYSIS.md` | Partial; infrastructure estimates still contain `TBD`. |
+| AI cost analysis at 100 / 1K / 10K / 100K runs | `AI-COST-ANALYSIS.md` | Mostly ready; update only if final live-provider runs or hosting plans change. |
 | Deployed application | AgentForge and target URLs above | Present; run final smoke before recording/submission. |
 | Final social post | Not yet created | Missing final-only deliverable. |
 
@@ -56,7 +56,7 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 2. Regenerate curated final reports after approval/replay so report markdown matches finding JSON, regression JSON, and approval history.
 3. Deploy and capture regression replay validation status, not just stored regression case files.
 4. Deploy and capture the new operator coverage/priority summary, then add regression trend/status evidence.
-5. Replace cost-analysis `TBD` infrastructure estimates with dated assumptions.
+5. Recheck cost analysis only if final deployed runs use live provider mode or Render/Langfuse plans change.
 6. Run a fresh final deployed campaign or replay after the final code deploy.
 7. Curate at least three final vulnerability reports across confirmed and clearly judge-flagged lanes.
 8. Record and link the 3-5 minute demo video.
