@@ -36,6 +36,7 @@ class RunArtifact(BaseModel):
     skipped_count: int = 0
     exchanges: list[TargetExchange] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)
+    orchestrator_recommendations: list[dict[str, Any]] = Field(default_factory=list)
     langfuse_trace_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None

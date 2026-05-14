@@ -33,6 +33,7 @@ class CampaignPlan(BaseModel):
     max_cases: int = 5
     budget_usd: float = 0.25
     cases: list[AttackCase] = Field(default_factory=list)
+    selection_reasons: list[dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

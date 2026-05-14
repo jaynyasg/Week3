@@ -11,6 +11,8 @@ from agentforge.http.auth import (
     require_operator,
 )
 from agentforge.models.campaign import CampaignStartRequest
+from agentforge.orchestrator.coverage import build_coverage_summary
+from agentforge.orchestrator.priority import recommend_next_cases
 
 router = APIRouter()
 
@@ -38,7 +40,16 @@ def operator_home(operator: str = Depends(require_operator)) -> str:
 def operator_status(
     operator: str = Depends(require_operator),
     settings=Depends(get_settings),
+    executor=Depends(get_executor),
+    store=Depends(get_store),
 ):
+    cases = executor.catalog.load_cases()
+    coverage = build_coverage_summary(
+        cases,
+        store.list_runs(evidence_environment=settings.evidence_environment),
+        store.list_findings(),
+        evidence_environment=settings.evidence_environment,
+    )
     return {
         "operator": operator,
         "targets": sorted(settings.target_urls),
@@ -48,6 +59,12 @@ def operator_status(
         "redteam_model": settings.redteam_model,
         "judge_model": settings.judge_model,
         "langfuse_enabled": settings.langfuse_enabled,
+        "coverage": coverage,
+        "next_campaign_recommendation": recommend_next_cases(
+            cases,
+            coverage,
+            max_cases=settings.max_cases_per_campaign,
+        ),
     }
 
 

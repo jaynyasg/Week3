@@ -12,6 +12,8 @@ from agentforge.models.finding import Finding, Verdict
 from agentforge.models.run_artifact import RunArtifact
 from agentforge.observability.events import build_run_event, log_agentforge_event
 from agentforge.observability.langfuse_client import LangfuseRecorder
+from agentforge.orchestrator.coverage import build_coverage_summary
+from agentforge.orchestrator.priority import recommend_next_cases
 from agentforge.redteam.providers import create_redteam_provider
 from agentforge.reporting.vulnerability_report import (
     build_regression_case,
@@ -61,11 +63,44 @@ class CampaignExecutor:
             if request.budget_usd is not None
             else self.settings.budget_usd
         )
-        cases = self.catalog.select(
-            category=request.category,
-            case_ids=request.case_ids,
-            max_cases=max_cases,
-        )
+        selection_reasons = []
+        if request.category or request.case_ids:
+            cases = self.catalog.select(
+                category=request.category,
+                case_ids=request.case_ids,
+                max_cases=max_cases,
+            )
+            selection_reasons = [
+                {
+                    "case_id": case.id,
+                    "category": case.category,
+                    "title": case.title,
+                    "reason": "operator_requested",
+                    "weak_surface_score": None,
+                    "tested_case_count": None,
+                    "available_case_count": None,
+                }
+                for case in cases
+            ]
+        else:
+            all_cases = self.catalog.load_cases()
+            coverage_summary = build_coverage_summary(
+                all_cases,
+                self.store.list_runs(
+                    evidence_environment=self.settings.evidence_environment
+                ),
+                self.store.list_findings(),
+                evidence_environment=self.settings.evidence_environment,
+            )
+            selection_reasons = recommend_next_cases(
+                all_cases,
+                coverage_summary,
+                max_cases=max_cases,
+            )
+            selected_ids = [item["case_id"] for item in selection_reasons]
+            selected_id_set = set(selected_ids)
+            selected_by_id = {case.id: case for case in all_cases if case.id in selected_id_set}
+            cases = [selected_by_id[case_id] for case_id in selected_ids if case_id in selected_by_id]
         return CampaignPlan(
             target_alias=target_alias,
             category=request.category,
@@ -73,6 +108,7 @@ class CampaignExecutor:
             max_cases=max_cases,
             budget_usd=budget_usd,
             cases=cases,
+            selection_reasons=selection_reasons,
         )
 
     def run(self, request: CampaignStartRequest) -> RunArtifact:
@@ -87,6 +123,7 @@ class CampaignExecutor:
             model_name=getattr(self.redteam, "model", "deterministic"),
             judge_model_provider=self.settings.judge_provider,
             judge_model_name=self.settings.judge_model,
+            orchestrator_recommendations=plan.selection_reasons,
         )
 
         for case in plan.cases:

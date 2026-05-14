@@ -62,6 +62,17 @@ class ArtifactStore:
             raise FileNotFoundError(run_id)
         return RunArtifact.model_validate_json(path.read_text(encoding="utf-8"))
 
+    def list_runs(self, evidence_environment: str | None = None) -> list[RunArtifact]:
+        runs: list[RunArtifact] = []
+        for path in sorted(self.results_dir.glob("run-*.json")):
+            run = RunArtifact.model_validate_json(path.read_text(encoding="utf-8"))
+            if (
+                evidence_environment is None
+                or run.evidence_environment == evidence_environment
+            ):
+                runs.append(run)
+        return sorted(runs, key=lambda run: run.completed_at or run.created_at)
+
     def save_finding(self, finding: Finding) -> Path:
         return self._write_json(
             self.findings_dir / f"{finding.finding_id}.json",
