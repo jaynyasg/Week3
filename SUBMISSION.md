@@ -1,6 +1,6 @@
 # AgentForge Final Submission Control
 
-**Status:** final completion in progress as of 2026-05-14. The MVP is deployed and has deployed-to-deployed evidence. Platform hardening for judge evidence, finding lifecycle, coverage-driven orchestration, regression replay, observability summary, report structure, and cost-analysis polish is implemented on `main`; the remaining work is authenticated deployed evidence capture, report curation, demo recording, and social publication.
+**Status:** final deployed evidence captured as of 2026-05-14. AgentForge is deployed on `main`, Render has run the latest attachment adapter fix (`b597142`), authenticated deployed campaigns and regression replay have been captured, and the repository now has three defensible report lanes. Remaining off-repo work is the 3-5 minute demo recording and required social post.
 
 ## Canonical Links
 
@@ -15,6 +15,7 @@
 | Final demo script | `deploy/docs/final-demo-script.md` |
 | Demo shot list | `deploy/docs/final-demo-shot-list.md` |
 | Final evidence sweep note | `deploy/docs/final-evidence-sweep.md` |
+| Final capture artifacts | `deploy/captures/` |
 | Social post draft | `deploy/docs/social-post.md` |
 | Final completion plan | `docs/plans/2026-05-14-001-feat-agentforge-final-submission-plan.md` |
 
@@ -25,7 +26,9 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 | Run ID | Environment | Cases | Findings | Submission use |
 | --- | --- | ---: | ---: | --- |
 | `run-b5a238a8b374` | deployed | 1 | 0 | Safe RBAC baseline; useful for deployed readiness and refusal proof. |
-| `run-3fcb420ddc96` | deployed | 4 | 4 | Primary current deployed campaign; needs final finding approval/rejection cleanup before submission. |
+| `run-3fcb420ddc96` | deployed | 4 | 4 | Earlier deployed campaign; source for the cost/DoS report lane and first attachment reliability regression lane. |
+| `run-6a5297ca98ab` | deployed | 5 | 2 | Final coverage-gap campaign selected from Orchestrator recommendations; completed 10/10 catalog coverage and finding curation. |
+| `run-94464fc484ac` | deployed | 2 | 1 | Targeted attachment rerun after commit `b597142`; confirmed attachment payload adapter fix and exposed a deployed attachment-path 500. |
 | `run-45db101ce676` | development | 1 | 1 | Excluded from final evidence; development-only context. |
 | `run-971349616249` | development | 1 | 1 | Excluded from final evidence; development-only context. |
 
@@ -33,26 +36,24 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 
 | Finding ID | Run ID | Category | Current status | Current lane |
 | --- | --- | --- | --- | --- |
-| `find-4e41695d42ec` | `run-3fcb420ddc96` | cost/DoS amplification | `approved` | Candidate confirmed report; verify report and regression status before final. |
-| `find-2f92b8b731b0` | `run-3fcb420ddc96` | attachment prompt injection | `needs_approval` | Candidate confirmed availability finding if approved after evidence review. |
-| `find-db7c275d109c` | `run-3fcb420ddc96` | tool/patient-scope tampering | `needs_approval` | Needs judge-hardening review; may be judge-flagged or rejected. |
-| `find-dc113160bb3c` | `run-3fcb420ddc96` | prompt-state injection | `needs_approval` | Known likely false positive; keep as approval-gate evidence unless replay proves otherwise. |
-| `find-b5768d9df4d7` | `run-45db101ce676` | RBAC/PHI exfiltration | `approved` | Development-only; do not count as final deployed evidence. |
-| `find-24111ce6522f` | `run-971349616249` | RBAC/PHI exfiltration | `needs_more_evidence` | Development-only false-positive example; do not count as final deployed evidence. |
+| `find-4e41695d42ec` | `run-3fcb420ddc96` | cost/DoS amplification | `approved` | Final report lane; latest replay `regval-c5831da1bcba` marks it `resolved`. |
+| `find-2f92b8b731b0` | `run-3fcb420ddc96` | attachment prompt injection reliability | `regression_queued` | Final report lane; latest replay `regval-c5831da1bcba` marks it `reappeared`. |
+| `find-63eb1564ab3c` | `run-94464fc484ac` | attachment prompt injection reliability | `regression_queued` | Final report lane after attachment adapter fix; latest replay `regval-c5831da1bcba` marks it `reappeared`. |
+| Judge-flagged/rejected set | deployed runs | RBAC, scope, prompt-state, attachment | mixed | Final curation counts: `approved=1`, `regression_queued=2`, `needs_more_evidence=5`, `rejected=3`. |
 
 ## Submission Deliverables
 
 | PDF deliverable | Current evidence | Status |
 | --- | --- | --- |
-| GitHub/GitLab repository with setup guide, architecture overview, deployed link, and run instructions | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md`, deployed links above | Mostly ready; update final evidence IDs and commit/push final artifacts. |
+| GitHub/GitLab repository with setup guide, architecture overview, deployed link, and run instructions | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md`, deployed links above | Ready after final evidence-doc commit/push. |
 | Threat model | `THREAT_MODEL.md` | Present; updated for final attack families and AgentForge controls. |
 | User doc | `USERS.md` | Present; updated for coverage/weak-surface and regression workflows. |
 | Architecture doc | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Present; updated for implemented orchestration, replay, and observability behavior. |
-| Demo video, 3-5 minutes | `deploy/docs/final-demo-script.md`, `deploy/docs/final-demo-shot-list.md` | Not recorded; script and shot list are ready for final evidence capture. |
-| Eval dataset across at least three attack categories | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Present; needs final deployed evidence sweep and curated status. |
-| Minimum three vulnerability reports | `evals/reports/*.md` | Reports exist; final submission needs at least three defensible reports with confirmed or clearly judge-flagged lanes. |
+| Demo video, 3-5 minutes | `deploy/docs/final-demo-script.md`, `deploy/docs/final-demo-shot-list.md` | Not recorded; script and shot list now reference final evidence IDs. |
+| Eval dataset across at least three attack categories | `evals/cases/`, `deploy/captures/campaign-run-6a5297ca98ab-20260514-173759.json`, `deploy/captures/attachment-campaign-run-94464fc484ac-20260514-180337.json` | Complete; 10/10 cases across 5 categories tested in deployed evidence. |
+| Minimum three vulnerability reports | `evals/reports/find-4e41695d42ec.md`, `evals/reports/find-2f92b8b731b0.md`, `evals/reports/find-63eb1564ab3c.md` | Complete; three defensible report lanes with approval/regression status. |
 | AI cost analysis at 100 / 1K / 10K / 100K runs | `AI-COST-ANALYSIS.md` | Mostly ready; update only if final live-provider runs or hosting plans change. |
-| Deployed application | AgentForge and target URLs above | Present; run final smoke before recording/submission. |
+| Deployed application | AgentForge and target URLs above; final deployed commit `b597142` | Complete; final authenticated status, campaign, curation, and replay captured. |
 | Final social post | `deploy/docs/social-post.md` | Drafted; publish externally and add URL before final submission. |
 
 ## Latest Public Smoke Check
@@ -65,18 +66,14 @@ Checked on 2026-05-14 during the final execution pass:
 | `https://agentforge-security.onrender.com/ready` | `status=ready`, target configured, `evidence_environment=deployed`, Langfuse configured |
 | `https://clinical-copilot-4kwb.onrender.com/agent/health` | `status=ok` |
 
-Authenticated evidence capture was not run in this shell because `AGENTFORGE_OPERATOR_TOKEN` was not set locally. Set it before running final `GET /operator/status`, `POST /operator/campaigns`, approval, artifact export, and `POST /operator/regressions/replay`. See `deploy/docs/final-evidence-sweep.md`.
+Authenticated evidence capture is complete. Final status artifact `deploy/captures/operator-status-final-20260514-180849.json` shows 10/10 catalog cases tested, 5 categories, final finding status counts, and two regression validations.
 
 ## Final Blockers
 
-1. Set `AGENTFORGE_OPERATOR_TOKEN` locally and capture authenticated `GET /operator/status`.
-2. Run a fresh final deployed campaign or replay after the final code deploy.
-3. Approve/reject/mark findings and regenerate curated final reports so report markdown matches finding JSON, regression JSON, and approval history.
-4. Capture regression replay validation status with `POST /operator/regressions/replay`.
-5. Curate at least three final vulnerability reports across confirmed and clearly judge-flagged lanes.
-6. Record and link the 3-5 minute demo video.
-7. Publish and link the required X or LinkedIn post tagging `@GauntletAI`.
-8. Recheck cost analysis only if final deployed runs use live provider mode or Render/Langfuse plans change.
+1. Record and link the 3-5 minute demo video.
+2. Publish and link the required X or LinkedIn post tagging `@GauntletAI`.
+3. Add the demo URL and social URL to this file and `deploy/docs/final-demo-script.md`.
+4. Run final `python -m pytest tests\agentforge -q`, then commit and push the final evidence-doc/capture update.
 
 ## Final Evidence Rule
 

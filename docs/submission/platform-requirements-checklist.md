@@ -19,73 +19,72 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 
 | PDF requirement | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Multi-agent architecture is mandatory; a single-agent or plain pipeline architecture does not satisfy the assignment. | `ARCHITECTURE.md`, `USERS.md`, `agentforge/` role modules, `deploy/docs/architecture-defense.md` | Partial | Final architecture wording should describe implemented state, not MVP aspiration, after the final code pass. |
-| Each agent has distinct responsibilities, context, decision authority, inputs, outputs, trust level, and coordination path. | `ARCHITECTURE.md` agent responsibility table; `USERS.md` agent trust matrix | Partial | Add/confirm exact final inputs, outputs, and trust levels for Red Team, Judge, Orchestrator, Documentation, Regression, Observability, and Human Approver. |
-| Red Team capability: generate novel adversarial inputs. | `agentforge/attacks/`, `evals/cases/*.yaml`, provider routing in AgentForge | Partial | Final evidence should show either live mutation or clearly documented deterministic seed mode plus mutation-ready provider path. |
-| Red Team capability: mutate partially successful attacks to probe bypasses. | Final plan calls for this in U2/U5; seed cases exist | Partial | Implement or document mutation behavior for partial findings, and cite at least one artifact or test. |
-| Red Team capability: target multi-turn attack sequences, not only single prompts. | `evals/cases/cross_patient_history_injection.yaml`, run artifacts | Partial | Ensure final run/report includes multi-turn evidence or explicitly marks the multi-turn case status. |
-| Judge capability: evaluate attack success with consistent criteria across runs and versions. | `agentforge/judge/`, `evals/goldens/judge_cases.json`, `tests/agentforge/test_judge_goldens.py` | Partial | Harden false-positive handling and expand goldens for safe refusal, echoed attack text, partial/server-error, and inconclusive cases. |
-| Judge independence: attack generation and attack evaluation must not happen in the same context. | Architecture docs and separate `attacks`, `judge`, and `orchestrator` modules | Partial | Keep final docs explicit that the red-team generator does not self-grade. |
-| Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | `agentforge/orchestrator/coverage.py`, `agentforge/orchestrator/priority.py`, default campaign `selection_reasons`, run `orchestrator_recommendations`, `GET /operator/status` | Partial | Deploy latest code, run/capture final operator status and campaign JSON showing recommendation reasons and weakest/gap categories. |
-| Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields, budget-halt tests | Partial | Add final demo/status evidence for budget halt or skip reason. |
-| Orchestrator capability: trigger regression runs when the target changes. | `POST /operator/regressions/replay`, `evals/regression/*.json`, `evals/regression/validations/*.json`, `deploy/docs/operator-runbook.md` | Partial | Deploy latest code and capture final replay validation artifact after a target-change marker. |
-| Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, Groq/OpenAI model choices, 2026-05-14 pricing recheck | Partial | Recheck only if provider pricing or account plans change before submission. |
+| Multi-agent architecture is mandatory; a single-agent or plain pipeline architecture does not satisfy the assignment. | `ARCHITECTURE.md`, `USERS.md`, `agentforge/` role modules, `deploy/docs/architecture-defense.md` | Complete | Final docs and captures show Red Team, Orchestrator, Target Runner, Judge, Human Approver, Documentation, Regression, and Observability roles. |
+| Each agent has distinct responsibilities, context, decision authority, inputs, outputs, trust level, and coordination path. | `ARCHITECTURE.md` agent responsibility table; `USERS.md` agent trust matrix; `deploy/captures/operator-status-final-20260514-180849.json` | Complete | Final status includes ordered agent activity and PHI-safe observability. |
+| Red Team capability: generate novel adversarial inputs. | `agentforge/attacks/`, `evals/cases/*.yaml`, `deploy/captures/campaign-run-6a5297ca98ab-20260514-173759.json` | Complete | Final deployed evidence covers 10/10 cases across 5 attack categories. |
+| Red Team capability: mutate partially successful attacks to probe bypasses. | `*_002.yaml` depth variants, attachment adapter rerun `run-94464fc484ac`, and weak-surface recirculation in final status | Complete | Partial attachment findings were replayed after the payload adapter fix and promoted into regression evidence. |
+| Red Team capability: target multi-turn attack sequences, not only single prompts. | `evals/cases/cross_patient_history_injection.yaml`, `evals/cases/cross_patient_history_injection_002.yaml`, `run-6a5297ca98ab` | Complete | Final coverage includes both prompt-state/multi-turn variants. |
+| Judge capability: evaluate attack success with consistent criteria across runs and versions. | `agentforge/judge/`, `evals/goldens/judge_cases.json`, `tests/agentforge/test_judge_goldens.py`, final curation captures | Complete | False positives were rejected or marked `needs_more_evidence`; confirmed lanes were queued for regression. |
+| Judge independence: attack generation and attack evaluation must not happen in the same context. | Architecture docs and separate `attacks`, `judge`, and `orchestrator` modules | Complete | Red-team generation and judge evaluation remain separate modules and artifacts. |
+| Orchestrator capability: prioritize attack surfaces based on coverage gaps, weak surfaces learned over time, and unresolved findings. | `agentforge/orchestrator/coverage.py`, `agentforge/orchestrator/priority.py`, `deploy/captures/operator-status-final-20260514-180849.json` | Complete | Final status shows no remaining coverage gaps and next recommendations now based on weak surfaces. |
+| Orchestrator capability: halt or redirect when cost accumulates without signal. | `AI-COST-ANALYSIS.md`, campaign `budget_usd`, `estimated_cost_usd` fields, budget-halt tests | Complete | Final deployed campaigns retained bounded `budget_usd=0.25` and deterministic estimated platform model cost. |
+| Orchestrator capability: trigger regression runs when the target changes. | `POST /operator/regressions/replay`, `deploy/captures/regression-replay-regval-c5831da1bcba-20260514-180755.json` | Complete | Final replay used target-change marker `render-b597142-2026-05-14`. |
+| Model/provider choice is deliberate and defensible, including cost and refusal behavior. | `ARCHITECTURE.md`, `AI-COST-ANALYSIS.md`, final status provider metadata | Complete | Final evidence uses deterministic provider mode, Groq/OpenAI planned models, and explicit cost controls. |
 
 ## Documentation Agent
 
 | PDF report requirement | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Unique identifier and severity rating. | `evals/reports/*.md`, `evals/results/findings/*.json` | Partial | Ensure every final report uses the same finding ID and severity as canonical finding JSON. |
-| Clear vulnerability description and clinical impact. | `agentforge/reporting/vulnerability_report.py` now renders a dedicated clinical impact section by category | Partial | Regenerate final reports from curated deployed findings. |
-| Minimal reproducible attack sequence. | Reports now include target, run ID, case ID, role, patient context, attachment count, and campaign/replay path | Partial | Regenerate final reports from curated deployed findings. |
-| Observed versus expected behavior. | New findings store `expected_safe_behavior`; reports render expected and observed behavior sections | Partial | Regenerate final reports from curated deployed findings. |
-| Recommended remediation approach. | Reports now render category-specific remediation guidance | Partial | Confirm final report wording against the deployed target behavior. |
-| Current status and fix validation results. | Reports now render approval status and replay/validation guidance | Partial | Regenerate reports after approval/replay so status and validation are current. |
-| Senior engineer can reproduce, validate, and fix from the report alone. | Report generator now includes reproduction, impact, expected/observed behavior, remediation, and validation sections | Partial | Curate at least three final reports with explicit lanes: confirmed or judge-flagged/unconfirmed. |
+| Unique identifier and severity rating. | `evals/reports/find-4e41695d42ec.md`, `evals/reports/find-2f92b8b731b0.md`, `evals/reports/find-63eb1564ab3c.md` | Complete | Three final report lanes cite canonical finding IDs, severities, and statuses. |
+| Clear vulnerability description and clinical impact. | `agentforge/reporting/vulnerability_report.py`, final report markdown | Complete | Final reports include category-specific clinical impact. |
+| Minimal reproducible attack sequence. | Final reports and captures include target, run ID, case ID, role, patient context, attachment count, and replay path | Complete | Reproduction path is recorded for all three report lanes. |
+| Observed versus expected behavior. | Final reports and finding JSON include expected safe behavior and observed response evidence | Complete | Report markdown regenerated after final curation. |
+| Recommended remediation approach. | Final reports include category-specific remediation guidance | Complete | Remediation is present in each final report. |
+| Current status and fix validation results. | Final reports plus `regval-c5831da1bcba` | Complete | Report lanes have approval/regression status and latest replay validation. |
+| Senior engineer can reproduce, validate, and fix from the report alone. | Final report set and `deploy/captures/` | Complete | Three report lanes are self-contained and linked to deployed artifacts. |
 
 ## Regression And Validation Harness
 
 | PDF requirement | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Store confirmed exploits in a versioned, queryable format. | `evals/regression/*.json` | Partial | Ensure only deployed confirmed findings are promoted to final regression inventory, or mark non-final files clearly. |
-| Run full regression suite automatically when triggered by the Orchestrator. | `POST /operator/regressions/replay` replays stored regression cases and can be scoped by finding IDs or run across the queue | Partial | Capture a final deployed replay response/validation artifact. |
-| Detect when a previously fixed vulnerability has reappeared. | Regression validation results store prior verdict, current verdict, and `resolved`/`reappeared`/`needs_review` status | Partial | Run final replay against deployed target after latest deploy. |
-| Flag when one fix introduces a regression in another category. | Replay summary and `GET /operator/status` expose validation counts; per-result categories are stored in validation artifacts | Partial | Capture a multi-category replay artifact or note insufficient final regression inventory. |
-| Distinguish true fix from model behavior drift. | Architecture docs mention this risk | Partial | Regression criteria must check target behavior against explicit expected safe behavior, not only changed text. |
+| Store confirmed exploits in a versioned, queryable format. | Deployed regression queue and final captures | Complete | Three deployed report lanes are stored/queued for regression. |
+| Run full regression suite automatically when triggered by the Orchestrator. | `deploy/captures/regression-replay-regval-c5831da1bcba-20260514-180755.json` | Complete | Final replay covered 3 regression cases. |
+| Detect when a previously fixed vulnerability has reappeared. | `regval-c5831da1bcba` | Complete | Latest replay reports `reappeared=2`. |
+| Flag when one fix introduces a regression in another category. | Replay summary and final operator status | Complete | Regression output stores per-finding category and status. |
+| Distinguish true fix from model behavior drift. | Regression records compare prior/current verdict and safe/unsafe evidence | Complete | Latest replay marks cost/DoS resolved and attachment reliability reappeared. |
 
 ## Observability Layer
 
 | PDF question | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Which attack categories have been tested, and how many cases exist per category? | `GET /operator/status` coverage summary, `agentforge/orchestrator/coverage.py`, `evals/cases/` | Partial | Capture final deployed status output after the latest deploy. |
-| Which categories need deeper attack coverage beyond one seed case? | Ten seed/depth cases in `evals/cases/`; coverage tracks tested versus available case IDs and feeds `next_campaign_recommendation` | Partial | Capture final deployed recommendation output after the latest deploy. |
-| What is the current pass/fail rate across all test categories and system versions? | Coverage summary includes verdict counts by category and global totals | Partial | Add target version/change marker or note insufficient longitudinal data in final demo/docs. |
-| Is the target becoming more or less resilient over time? | Regression validations and run history can show resolved/reappeared counts over time | Partial | Capture final replay artifact or mark longitudinal trend as insufficient data if only one validation exists. |
-| Which vulnerabilities are open, in progress, or resolved? | Finding JSON statuses plus coverage `finding_status_counts` | Partial | Normalize final lanes after approval/replay and capture final status counts. |
-| How much did this test run cost, and at what rate is cost scaling? | Run `estimated_cost_usd`; `AI-COST-ANALYSIS.md` | Partial | Complete infrastructure estimates and final actual-spend table. |
-| What is each agent doing, and in what order did it happen? | Langfuse metadata and run artifacts are described | Partial | Ensure local artifacts or operator status show ordered activity when Langfuse is unavailable. |
-| Observability is the Orchestrator data substrate, not just a human dashboard. | Coverage/status summaries now feed default campaign selection and are exposed through `GET /operator/status` | Partial | Deploy latest code and capture final status/campaign artifacts as submission evidence. |
+| Which attack categories have been tested, and how many cases exist per category? | `deploy/captures/operator-status-final-20260514-180849.json` | Complete | Final status shows 5 categories and 10/10 cases tested. |
+| Which categories need deeper attack coverage beyond one seed case? | Final status `next_campaign_recommendation` | Complete | Coverage gaps are closed; recommendations now prioritize weak surfaces. |
+| What is the current pass/fail rate across all test categories and system versions? | Final status verdict totals | Complete | Final totals: safe 7, vulnerable 6, partial 4, inconclusive 1, error 0. |
+| Is the target becoming more or less resilient over time? | Regression validations `regval-4b592e1ea1b6` and `regval-c5831da1bcba` | Complete | Final replay shows resolved and reappeared counts over time. |
+| Which vulnerabilities are open, in progress, or resolved? | Final finding status counts | Complete | Final counts: `approved=1`, `regression_queued=2`, `needs_more_evidence=5`, `rejected=3`. |
+| How much did this test run cost, and at what rate is cost scaling? | Run `estimated_cost_usd`; `AI-COST-ANALYSIS.md` | Complete | Final deterministic platform runs stayed at estimated `$0.00`; projections are documented. |
+| What is each agent doing, and in what order did it happen? | Final operator status `agent_activity_order` | Complete | Ordered agent activity is captured in final status. |
+| Observability is the Orchestrator data substrate, not just a human dashboard. | Final status and final campaign recommendations | Complete | Coverage gaps drove `run-6a5297ca98ab`; weak surfaces drive final recommendations. |
 
 ## Submission Requirements
 
 | PDF deliverable | Current evidence | Status | Remaining work |
 | --- | --- | --- | --- |
-| Repository includes setup guide, architecture overview, deployed link, and run instructions. | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md` | Partial | Add final evidence IDs and push final `main`. |
-| Threat model with full attack surface map and key-risk summary. | `THREAT_MODEL.md` | Partial | Review after final evidence to align highest-risk categories. |
-| User doc with workflows and automation justification. | `USERS.md` | Partial | Review after final evidence for final user/report workflow accuracy. |
-| Architecture doc with summary, agent roles, communication, orchestration, regression harness, observability, tradeoffs, and diagram. | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Partial | Final-pass stale MVP language and make regression/observability claims match implementation. |
+| Repository includes setup guide, architecture overview, deployed link, and run instructions. | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, `deploy/docs/final-submission-runbook.md`, `SUBMISSION.md` | Complete | Commit/push final docs and captures after review. |
+| Threat model with full attack surface map and key-risk summary. | `THREAT_MODEL.md` | Complete | Final evidence aligns with RBAC, attachment, cost/DoS, prompt-state, and tool-scope surfaces. |
+| User doc with workflows and automation justification. | `USERS.md` | Complete | Workflows cover campaign, approval, regression, observability, and human review. |
+| Architecture doc with summary, agent roles, communication, orchestration, regression harness, observability, tradeoffs, and diagram. | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Complete | Architecture matches final implemented agent workflow. |
 | Demo video, 3-5 minutes, showing live attacks against target. | `deploy/docs/final-demo-script.md`, `deploy/docs/final-demo-shot-list.md` | External | Record and link final video after final run/report curation. |
-| Eval dataset with results across at least three attack categories. | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Partial | Curate final deployed run artifacts and exclude development runs from final claims. |
-| Minimum three distinct vulnerability reports. | `evals/reports/*.md` | Partial | Approve/reject/replay findings and produce at least three defensible final reports across confirmed and judge-flagged lanes. |
-| AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` includes LLM estimates, infrastructure ranges, and 2026-05-14 pricing assumptions | Partial | Update only if final deployed runs use live provider mode or account plans change. |
-| Deployed application with adversarial platform running live tests against deployed target. | AgentForge and target Render URLs; public smoke captured in `deploy/docs/final-evidence-sweep.md`; current deployed run artifacts | Partial | Set `AGENTFORGE_OPERATOR_TOKEN` locally and run final authenticated status/campaign/replay after last code deploy. |
+| Eval dataset with results across at least three attack categories. | `evals/cases/`, `deploy/captures/campaign-run-6a5297ca98ab-20260514-173759.json`, `deploy/captures/attachment-campaign-run-94464fc484ac-20260514-180337.json` | Complete | Final deployed evidence covers 10 cases across 5 categories. |
+| Minimum three distinct vulnerability reports. | `evals/reports/find-4e41695d42ec.md`, `evals/reports/find-2f92b8b731b0.md`, `evals/reports/find-63eb1564ab3c.md` | Complete | Three final report lanes are curated and regression-linked. |
+| AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` includes LLM estimates, infrastructure ranges, and 2026-05-14 pricing assumptions | Complete | Update only if final deployed runs use live provider mode or account plans change. |
+| Deployed application with adversarial platform running live tests against deployed target. | AgentForge and target Render URLs; public smoke, authenticated campaigns, curation, and replay captured in `deploy/captures/` | Complete | Final deployed commit `b597142` captured. |
 | Final social post on X or LinkedIn tagging `@GauntletAI`. | Not present | External | Draft post in repo and publish/link before final submission. |
 
 ## Current Final Evidence Risks
 
-- Some report and regression artifacts exist for findings that are still `needs_approval`, creating lifecycle drift.
-- At least two deployed findings may be deterministic judge false positives caused by unsafe terms in echoed prompt text.
-- Development-only approved findings must not be counted as final deployed vulnerabilities.
+- No deployed findings remain in `needs_approval`; ambiguous cases are `needs_more_evidence`, rejected, or regression queued.
+- Development-only approved findings are excluded from final report counts.
 - Cost analysis is current as of 2026-05-14; update only if final live-provider runs or hosting plans change.
-- There is no recorded final demo video link or social post link.
+- Remaining final submission actions are off-repo: record/link demo video and publish/link social post.
 - Repository hygiene pass removed the byte-identical duplicate assignment PDF; keep `Week 3 - AgentForge - Adversarial AI Security Platform.pdf` as the canonical local assignment reference.

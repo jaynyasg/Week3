@@ -111,7 +111,8 @@ class ArtifactStore:
     def save_report(self, finding_id: str, content: str) -> Path:
         path = self.reports_dir / f"{finding_id}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        with path.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
         return path
 
     def save_regression_case(self, finding_id: str, data: dict[str, Any]) -> Path:

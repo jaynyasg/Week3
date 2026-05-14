@@ -55,5 +55,9 @@ def approve_finding(
         store.delete_regression_case(finding.finding_id)
     store.save_finding(finding)
     store.update_run_finding(finding)
-    store.save_report(finding.finding_id, render_vulnerability_report(finding))
+    try:
+        run = store.get_run(finding.run_id)
+    except FileNotFoundError:
+        run = None
+    store.save_report(finding.finding_id, render_vulnerability_report(finding, run))
     return finding.model_dump(mode="json")

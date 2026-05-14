@@ -8,9 +8,9 @@ Use this script after the final authenticated deployed evidence sweep. Fill in t
 
 | Item | Final value |
 | --- | --- |
-| Final deployed run ID | `TODO` |
-| Primary report IDs | `TODO` |
-| Regression replay or validation ID | `TODO` |
+| Final deployed run ID | `run-6a5297ca98ab`; attachment rerun `run-94464fc484ac` |
+| Primary report IDs | `find-4e41695d42ec`, `find-2f92b8b731b0`, `find-63eb1564ab3c` |
+| Regression replay or validation ID | `regval-c5831da1bcba` |
 | Demo video URL | `TODO` |
 | Published social post URL | `TODO` |
 
@@ -85,12 +85,7 @@ Show either the fresh campaign request or the final run artifact:
 
 ```powershell
 $body = @{
-  max_cases = 3
-  categories = @(
-    "rbac_phi_exfiltration",
-    "prompt_injection",
-    "tool_misuse"
-  )
+  max_cases = 5
 } | ConvertTo-Json
 
 Invoke-RestMethod `
@@ -110,6 +105,11 @@ Call out:
 - Case IDs.
 - Cost estimate and budget fields.
 - Selection reasons or orchestrator recommendations.
+
+Final artifact to show if you do not rerun live during recording:
+
+- `deploy/captures/campaign-run-6a5297ca98ab-20260514-173759.json`
+- `deploy/captures/attachment-campaign-run-94464fc484ac-20260514-180337.json`
 
 ## 2:15 - Finding Review And Report Quality
 
@@ -144,6 +144,8 @@ Invoke-RestMethod `
   -Method Post `
   -Uri https://agentforge-security.onrender.com/operator/regressions/replay `
   -Headers $headers `
+  -ContentType "application/json" `
+  -Body (@{ target_change_id = "render-b597142-2026-05-14"; finding_ids = @() } | ConvertTo-Json) `
   -TimeoutSec 120
 ```
 
@@ -153,6 +155,10 @@ Call out:
 - Validation artifact ID or path.
 - Per-finding validation status.
 - Any reappeared, resolved, or needs-review results.
+
+Final replay artifact to show if you do not rerun live during recording:
+
+- `deploy/captures/regression-replay-regval-c5831da1bcba-20260514-180755.json`
 
 ## 3:40 - Observability And Cost
 
@@ -190,4 +196,3 @@ If a live campaign is slow because of Render cold start:
 - Show the latest final deployed run JSON.
 - Show the matching finding/report/regression artifacts.
 - State that the live endpoint is warming and that the artifacts were captured from deployed AgentForge calling the deployed target.
-
