@@ -1,6 +1,8 @@
-# MVP submission runbook (deployed AgentForge → deployed target)
+# MVP submission runbook (deployed AgentForge -> deployed target)
 
 Canonical evidence path: **deployed AgentForge** calls **deployed Week 2 Clinical Co-Pilot** only. Repo root: `C:\Users\jayny\OneDrive\Documents\GitLab\Week3`.
+
+For final submission status, use `SUBMISSION.md` and `docs/submission/platform-requirements-checklist.md` as the source of truth. This runbook remains the operational recipe for smoke checks, campaigns, approvals, and artifact download.
 
 This runbook maps your submission checklist to plan flows **F1–F6** from `docs/plans/2026-05-11-001-feat-agentforge-security-platform-plan.md` and the origin brainstorm.
 

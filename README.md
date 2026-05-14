@@ -18,10 +18,17 @@ Operator endpoints (campaigns, findings, approvals, artifacts) require the `AGEN
 
 ## Project Status
 
-This repository is in Week 3 build-out. Current planning artifacts:
+The MVP is complete and deployed. Final-submission completion is tracked in:
+
+- `SUBMISSION.md`
+- `docs/submission/platform-requirements-checklist.md`
+- `docs/plans/2026-05-14-001-feat-agentforge-final-submission-plan.md`
+
+Current planning artifacts:
 
 - `docs/brainstorms/week3-adversarial-ai-security-platform-requirements.md`
 - `docs/plans/2026-05-11-001-feat-agentforge-security-platform-plan.md`
+- `docs/plans/2026-05-14-001-feat-agentforge-final-submission-plan.md`
 
 U1 documentation foundation:
 
@@ -131,7 +138,8 @@ AGENTFORGE_ARTIFACT_DIR=/data/agentforge
 
 The Render blueprint in `render.yaml` mounts persistent storage at `/data/agentforge` and sets `AGENTFORGE_ARTIFACT_DIR` to match (so the image’s baked-in case catalog under `/app/evals/cases` is not hidden by the disk).
 
-Submission checklist (env vars, smoke, evidence, F1–F6 mapping): `deploy/docs/mvp-submission-runbook.md`.  
+Final submission control: `SUBMISSION.md` and `docs/submission/platform-requirements-checklist.md`.
+Submission runbook (env vars, smoke, evidence, F1-F6 mapping): `deploy/docs/mvp-submission-runbook.md`.
 Also see `deploy/docs/deployment.md`, `deploy/docs/smoke-checklist.md`, `deploy/docs/operator-runbook.md`, and `deploy/scripts/Deploy-Smoke.ps1`.
 
 ## Non-Goals
