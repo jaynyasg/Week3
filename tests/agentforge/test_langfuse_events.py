@@ -34,4 +34,7 @@ def test_langfuse_payload_is_metadata_only(settings):
 
     assert payload["recorded"] is False
     assert payload["scores"][1]["value"] == "needs_approval"
+    assert payload["scores"][2]["value"] == "vulnerable"
+    assert payload["scores"][3]["value"] == "rbac"
+    assert payload["metadata"]["agent_activity_order"][0] == "orchestrator"
     assert "Hemoglobin" not in str(payload)

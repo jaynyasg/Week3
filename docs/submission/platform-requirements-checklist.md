@@ -78,7 +78,7 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 | Eval dataset with results across at least three attack categories. | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Partial | Curate final deployed run artifacts and exclude development runs from final claims. |
 | Minimum three distinct vulnerability reports. | `evals/reports/*.md` | Partial | Approve/reject/replay findings and produce at least three defensible final reports across confirmed and judge-flagged lanes. |
 | AI cost analysis with actual dev spend and projected 100 / 1K / 10K / 100K costs. | `AI-COST-ANALYSIS.md` includes LLM estimates, infrastructure ranges, and 2026-05-14 pricing assumptions | Partial | Update only if final deployed runs use live provider mode or account plans change. |
-| Deployed application with adversarial platform running live tests against deployed target. | AgentForge and target Render URLs; current deployed run artifacts | Partial | Run final smoke and final deployed campaign after last code deploy. |
+| Deployed application with adversarial platform running live tests against deployed target. | AgentForge and target Render URLs; public smoke captured in `deploy/docs/final-evidence-sweep.md`; current deployed run artifacts | Partial | Set `AGENTFORGE_OPERATOR_TOKEN` locally and run final authenticated status/campaign/replay after last code deploy. |
 | Final social post on X or LinkedIn tagging `@GauntletAI`. | Not present | External | Draft post in repo and publish/link before final submission. |
 
 ## Current Final Evidence Risks
@@ -88,4 +88,4 @@ This checklist tracks the gap between the deployed MVP and the final submission 
 - Development-only approved findings must not be counted as final deployed vulnerabilities.
 - Cost analysis is current as of 2026-05-14; update only if final live-provider runs or hosting plans change.
 - There is no recorded final demo video link or social post link.
-- There are two assignment PDFs in the repo root; decide whether the duplicate belongs in the final submission.
+- Repository hygiene pass removed the byte-identical duplicate assignment PDF; keep `Week 3 - AgentForge - Adversarial AI Security Platform.pdf` as the canonical local assignment reference.

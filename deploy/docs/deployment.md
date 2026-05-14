@@ -12,6 +12,8 @@ The root `render.yaml` provisions one web service:
 - Persistent disk mounted at `/data/agentforge` (see `render.yaml`); seed cases remain under `/app/evals/cases` in the image.
 - Public health check at `/health`.
 - Protected operator/API surface under `/operator/*`.
+- Authenticated regression replay under `/operator/regressions/replay`.
+- Operator observability summary under `/operator/status`.
 
 ## Required Environment Variables
 
@@ -23,6 +25,7 @@ The root `render.yaml` provisions one web service:
 | `AGENTFORGE_ARTIFACT_DIR` | Writable artifact root. On Render use `/data/agentforge` (must match disk `mountPath` in `render.yaml`). |
 | `AGENTFORGE_EVIDENCE_ENVIRONMENT` | Must be `deployed` for submission evidence. |
 | `AGENTFORGE_BUDGET_USD` | Per-campaign LLM budget cap. |
+| `AGENTFORGE_MAX_CASES_PER_CAMPAIGN` | Default case cap when the Orchestrator chooses coverage/weak-surface recommendations. |
 | `AGENTFORGE_PROVIDER_MODE` | `deterministic` for dry/safe mode, `live` for hosted LLM calls. |
 | `GROQ_API_KEY` | Enables Groq `llama-3.1-8b-instant` red-team mutation when provider mode is `live`. |
 | `OPENAI_API_KEY` | Enables OpenAI `gpt-5-nano` judge fallback/docs when provider mode is `live`. |

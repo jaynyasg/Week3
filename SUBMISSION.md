@@ -1,6 +1,6 @@
 # AgentForge Final Submission Control
 
-**Status:** final completion in progress as of 2026-05-14. The MVP is deployed and has deployed-to-deployed evidence, but the final submission still needs evidence curation, report/status cleanup, cost-analysis polish, demo video, social post, and repository hygiene.
+**Status:** final completion in progress as of 2026-05-14. The MVP is deployed and has deployed-to-deployed evidence. Platform hardening for judge evidence, finding lifecycle, coverage-driven orchestration, regression replay, observability summary, report structure, and cost-analysis polish is implemented on `main`; the remaining work is authenticated deployed evidence capture, report curation, demo recording, and social publication.
 
 ## Canonical Links
 
@@ -11,6 +11,9 @@
 | Platform requirements checklist | `docs/submission/platform-requirements-checklist.md` |
 | Operator runbook | `deploy/docs/operator-runbook.md` |
 | Deployment runbook | `deploy/docs/mvp-submission-runbook.md` |
+| Demo shot list | `deploy/docs/final-demo-shot-list.md` |
+| Final evidence sweep note | `deploy/docs/final-evidence-sweep.md` |
+| Social post draft | `deploy/docs/social-post.md` |
 | Final completion plan | `docs/plans/2026-05-14-001-feat-agentforge-final-submission-plan.md` |
 
 Final evidence must come from deployed AgentForge calling the deployed Clinical Co-Pilot target with `evidence_environment=deployed`. Local and development runs can support implementation, but they do not satisfy final evidence claims.
@@ -40,28 +43,38 @@ Final evidence must come from deployed AgentForge calling the deployed Clinical 
 | PDF deliverable | Current evidence | Status |
 | --- | --- | --- |
 | GitHub/GitLab repository with setup guide, architecture overview, deployed link, and run instructions | `README.md`, `deploy/docs/deployment.md`, `deploy/docs/operator-runbook.md`, deployed links above | Mostly ready; update final checklist links and commit/push final artifacts. |
-| Threat model | `THREAT_MODEL.md` | Present; final polish after evidence curation. |
-| User doc | `USERS.md` | Present; final polish after evidence curation. |
-| Architecture doc | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Present; must align final wording with implemented Platform Requirements. |
-| Demo video, 3-5 minutes | `deploy/docs/demo-script.md` | Not recorded; update script after final finding status is settled. |
+| Threat model | `THREAT_MODEL.md` | Present; updated for final attack families and AgentForge controls. |
+| User doc | `USERS.md` | Present; updated for coverage/weak-surface and regression workflows. |
+| Architecture doc | `ARCHITECTURE.md`, `deploy/docs/architecture-defense.md` | Present; updated for implemented orchestration, replay, and observability behavior. |
+| Demo video, 3-5 minutes | `deploy/docs/demo-script.md`, `deploy/docs/final-demo-shot-list.md` | Not recorded; script and shot list are ready for final evidence capture. |
 | Eval dataset across at least three attack categories | `evals/cases/`, `evals/results/run-3fcb420ddc96.json` | Present; needs final deployed evidence sweep and curated status. |
 | Minimum three vulnerability reports | `evals/reports/*.md` | Reports exist; final submission needs at least three defensible reports with confirmed or clearly judge-flagged lanes. |
 | AI cost analysis at 100 / 1K / 10K / 100K runs | `AI-COST-ANALYSIS.md` | Mostly ready; update only if final live-provider runs or hosting plans change. |
 | Deployed application | AgentForge and target URLs above | Present; run final smoke before recording/submission. |
-| Final social post | Not yet created | Missing final-only deliverable. |
+| Final social post | `deploy/docs/social-post.md` | Drafted; publish externally and add URL before final submission. |
+
+## Latest Public Smoke Check
+
+Checked on 2026-05-14 during the final execution pass:
+
+| Endpoint | Result |
+| --- | --- |
+| `https://agentforge-security.onrender.com/health` | `status=ok` |
+| `https://agentforge-security.onrender.com/ready` | `status=ready`, target configured, `evidence_environment=deployed`, Langfuse configured |
+| `https://clinical-copilot-4kwb.onrender.com/agent/health` | `status=ok` |
+
+Authenticated evidence capture was not run in this shell because `AGENTFORGE_OPERATOR_TOKEN` was not set locally. Set it before running final `GET /operator/status`, `POST /operator/campaigns`, approval, artifact export, and `POST /operator/regressions/replay`. See `deploy/docs/final-evidence-sweep.md`.
 
 ## Final Blockers
 
-1. Harden judge evidence handling so safe refusals that echo attack text do not become confirmed vulnerability reports.
-2. Regenerate curated final reports after approval/replay so report markdown matches finding JSON, regression JSON, and approval history.
-3. Deploy and capture regression replay validation status, not just stored regression case files.
-4. Deploy and capture the new operator coverage/priority summary, then add regression trend/status evidence.
-5. Recheck cost analysis only if final deployed runs use live provider mode or Render/Langfuse plans change.
-6. Run a fresh final deployed campaign or replay after the final code deploy.
-7. Curate at least three final vulnerability reports across confirmed and clearly judge-flagged lanes.
-8. Record and link the 3-5 minute demo video.
-9. Draft and link the required X or LinkedIn post tagging `@GauntletAI`.
-10. Clean repo status, decide whether the duplicate assignment PDF belongs, commit, and push.
+1. Set `AGENTFORGE_OPERATOR_TOKEN` locally and capture authenticated `GET /operator/status`.
+2. Run a fresh final deployed campaign or replay after the final code deploy.
+3. Approve/reject/mark findings and regenerate curated final reports so report markdown matches finding JSON, regression JSON, and approval history.
+4. Capture regression replay validation status with `POST /operator/regressions/replay`.
+5. Curate at least three final vulnerability reports across confirmed and clearly judge-flagged lanes.
+6. Record and link the 3-5 minute demo video.
+7. Publish and link the required X or LinkedIn post tagging `@GauntletAI`.
+8. Recheck cost analysis only if final deployed runs use live provider mode or Render/Langfuse plans change.
 
 ## Final Evidence Rule
 

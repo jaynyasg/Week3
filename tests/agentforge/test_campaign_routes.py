@@ -58,6 +58,8 @@ def test_operator_status_exposes_coverage_recommendations(settings):
     assert body["next_campaign_recommendation"][0]["case_id"]
     assert body["regressions"]["case_count"] == 0
     assert body["regressions"]["validation_count"] == 0
+    assert body["observability"]["answers"]["category_count"] >= 5
+    assert body["observability"]["agent_activity_order"][0]["agent"] == "Orchestrator"
 
 
 def test_operator_regression_replay_validates_stored_case(settings):

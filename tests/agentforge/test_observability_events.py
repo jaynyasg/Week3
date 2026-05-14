@@ -17,6 +17,8 @@ def test_run_event_is_phi_safe_metadata():
     event = build_run_event(run)
 
     assert event["model_name"] == "llama-3.1-8b-instant"
+    assert event["exchange_count"] == 0
+    assert event["orchestrator_recommendation_count"] == 0
     assert "response_excerpt" not in event
 
 

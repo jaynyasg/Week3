@@ -12,7 +12,7 @@ from agentforge.http.auth import (
 )
 from agentforge.http.schemas import RegressionReplayRequest
 from agentforge.models.campaign import CampaignStartRequest
-from agentforge.orchestrator.coverage import build_coverage_summary
+from agentforge.observability.summary import build_observability_summary
 from agentforge.orchestrator.priority import recommend_next_cases
 
 router = APIRouter()
@@ -44,16 +44,23 @@ def operator_status(
     settings=Depends(get_settings),
     executor=Depends(get_executor),
     store=Depends(get_store),
+    metrics=Depends(get_metrics),
 ):
     cases = executor.catalog.load_cases()
-    coverage = build_coverage_summary(
-        cases,
-        store.list_runs(evidence_environment=settings.evidence_environment),
-        store.list_findings(),
-        evidence_environment=settings.evidence_environment,
-    )
+    runs = store.list_runs(evidence_environment=settings.evidence_environment)
+    findings = store.list_findings()
+    regression_cases = store.list_regression_cases()
     regression_validations = store.list_regression_validations()
-    latest_validation = regression_validations[-1] if regression_validations else None
+    observability = build_observability_summary(
+        cases=cases,
+        runs=runs,
+        findings=findings,
+        regression_cases=regression_cases,
+        regression_validations=regression_validations,
+        evidence_environment=settings.evidence_environment,
+        metrics_snapshot=metrics.snapshot(),
+    )
+    coverage = observability["coverage"]
     return {
         "operator": operator,
         "targets": sorted(settings.target_urls),
@@ -69,17 +76,8 @@ def operator_status(
             coverage,
             max_cases=settings.max_cases_per_campaign,
         ),
-        "regressions": {
-            "case_count": len(store.list_regression_cases()),
-            "validation_count": len(regression_validations),
-            "latest_validation": {
-                "validation_id": latest_validation.get("validation_id"),
-                "target_change_id": latest_validation.get("target_change_id"),
-                "summary": latest_validation.get("summary", {}),
-            }
-            if latest_validation
-            else None,
-        },
+        "regressions": observability["regressions"],
+        "observability": observability,
     }
 
 

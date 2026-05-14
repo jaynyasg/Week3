@@ -11,6 +11,9 @@ class LangfuseRecorder:
         self.settings = settings
 
     def build_payload(self, run: RunArtifact) -> dict[str, Any]:
+        categories = sorted({finding.category for finding in run.findings})
+        verdicts = sorted({finding.verdict.value for finding in run.findings})
+        statuses = sorted({finding.status.value for finding in run.findings})
         return {
             "trace_name": "agentforge-campaign",
             "trace_id": run.run_id,
@@ -24,6 +27,22 @@ class LangfuseRecorder:
                 "judge_model_name": run.judge_model_name,
                 "estimated_cost_usd": round(run.estimated_cost_usd, 6),
                 "refusal_count": run.refusal_count,
+                "exchange_count": len(run.exchanges),
+                "finding_categories": categories,
+                "finding_verdicts": verdicts,
+                "finding_statuses": statuses,
+                "orchestrator_recommendation_count": len(
+                    run.orchestrator_recommendations
+                ),
+                "agent_activity_order": [
+                    "orchestrator",
+                    "red_team",
+                    "target_runner",
+                    "judge",
+                    "documentation",
+                    "regression",
+                    "observability",
+                ],
             },
             "scores": [
                 {
@@ -33,11 +52,23 @@ class LangfuseRecorder:
                 },
                 {
                     "name": "approval_statuses",
-                    "value": ",".join(
-                        sorted({finding.status.value for finding in run.findings})
-                    )
-                    or "none",
+                    "value": ",".join(statuses) or "none",
                     "data_type": "CATEGORICAL",
+                },
+                {
+                    "name": "verdicts",
+                    "value": ",".join(verdicts) or "none",
+                    "data_type": "CATEGORICAL",
+                },
+                {
+                    "name": "attack_categories",
+                    "value": ",".join(categories) or "none",
+                    "data_type": "CATEGORICAL",
+                },
+                {
+                    "name": "estimated_cost_usd",
+                    "value": round(run.estimated_cost_usd, 6),
+                    "data_type": "NUMERIC",
                 },
             ],
             "observations": [

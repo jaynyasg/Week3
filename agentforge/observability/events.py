@@ -23,6 +23,8 @@ def log_agentforge_event(
 def build_run_event(run: RunArtifact) -> dict[str, Any]:
     severities = [finding.severity for finding in run.findings]
     statuses = [finding.status.value for finding in run.findings]
+    verdicts = [finding.verdict.value for finding in run.findings]
+    categories = [finding.category for finding in run.findings]
     return {
         "run_id": run.run_id,
         "campaign_id": run.campaign_id,
@@ -35,7 +37,11 @@ def build_run_event(run: RunArtifact) -> dict[str, Any]:
         "judge_model_name": run.judge_model_name,
         "estimated_cost_usd": round(run.estimated_cost_usd, 6),
         "refusal_count": run.refusal_count,
+        "exchange_count": len(run.exchanges),
         "finding_count": len(run.findings),
+        "finding_categories": sorted(set(categories)),
         "finding_severities": sorted(set(severities)),
         "finding_statuses": sorted(set(statuses)),
+        "finding_verdicts": sorted(set(verdicts)),
+        "orchestrator_recommendation_count": len(run.orchestrator_recommendations),
     }

@@ -49,8 +49,8 @@ The report viewer reads the submitted artifacts and watches the demo. This user 
 | Deployed Target Runner | Send prompts to deployed Clinical Co-Pilot | Calls only configured deployed target URL |
 | Judge Agent | Evaluate observed behavior against expected safe behavior | Does not trust Red Team self-assessment |
 | Documentation Agent | Produce vulnerability reports | Uses run evidence; does not invent exploit details |
-| Regression Harness | Preserve replayable cases | Labels development vs deployed evidence clearly |
-| Observability Layer | Record status, cost, provider, verdict, category | No raw PHI in structured logs |
+| Regression Harness | Preserve replayable cases and replay them after target changes | Labels development vs deployed evidence clearly |
+| Observability Layer | Record status, cost, provider, verdict, category, weak surface, and regression status | No raw PHI in structured logs or Langfuse metadata |
 
 ## Part 4 - Clinical Roles Under Test
 
@@ -87,7 +87,11 @@ The platform submits a lab or intake attachment whose visible clinical content i
 
 A confirmed finding becomes a vulnerability report and a replayable regression artifact. A maintainer can use the report to reproduce and later validate a fix.
 
-### UC-06 - Produce final defense evidence
+### UC-06 - Review coverage, weak surfaces, and regression status
+
+The operator opens `GET /operator/status` to see categories tested, cases per category, untested case IDs, weakest categories, finding status counts, run cost, and the next campaign recommendation. This replaces manual spreadsheet tracking.
+
+### UC-07 - Produce final defense evidence
 
 The grader opens the deployed platform, sees the deployed target URL, starts or reviews a bounded campaign, opens run artifacts, and sees the architecture/cost/security narrative aligned with the demo.
 

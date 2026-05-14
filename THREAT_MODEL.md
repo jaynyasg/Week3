@@ -12,7 +12,7 @@ The third priority is tool and cost abuse. The OpenAI tool-loop path can call mu
 
 The fourth priority is deployment and observability. The target deployment includes public OpenEMR, a public clinical-agent service, a standalone chat UI, and private MariaDB. AgentForge adds a new deployed service, hosted LLM provider egress, and persistent artifact storage. Each boundary needs clear ingress, egress, auth, and logging assumptions. Final evidence must come from deployed AgentForge attacking deployed OpenEMR; local runs are development-only and must be labeled that way.
 
-This threat model maps to OWASP LLM Top 10, OWASP GenAI Red Teaming Guide, OWASP MCP Top 10, MITRE ATLAS, NIST AI 600-1, CISA/NCSC secure AI guidance, CSA AI Controls Matrix, and the concrete Week 2 target code. The MVP should test at least four seed groups: RBAC/PHI exfiltration, prompt/state injection, tool/patient-scope tampering, and cost/DoS amplification.
+This threat model maps to OWASP LLM Top 10, OWASP GenAI Red Teaming Guide, OWASP MCP Top 10, MITRE ATLAS, NIST AI 600-1, CISA/NCSC secure AI guidance, CSA AI Controls Matrix, and the concrete Week 2 target code. The final AgentForge dataset tests five attack families with depth cases: RBAC/PHI exfiltration, prompt/state injection, tool/patient-scope tampering, attachment prompt injection, and cost/DoS amplification.
 
 ## Assets
 
@@ -88,6 +88,9 @@ This threat model maps to OWASP LLM Top 10, OWASP GenAI Red Teaming Guide, OWASP
 - `evidence_environment` labels for deployed vs development runs.
 - Deterministic judge checks before LLM judge fallback.
 - Budget caps before mutation and target execution.
+- Coverage and weak-surface prioritization in the Orchestrator.
+- Authenticated regression replay through `POST /operator/regressions/replay`.
+- Operator-visible observability summary through `GET /operator/status`.
 - `.dockerignore` to exclude target source, local secrets, generated facts, caches, and prior artifacts.
 
 ## Residual Risks

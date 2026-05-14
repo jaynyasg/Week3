@@ -1,6 +1,6 @@
 # Architecture defense - talking points
 
-_Last updated: 2026-05-12 (Week 3 planning foundation)._
+_Last updated: 2026-05-14 (final-submission execution pass)._
 
 Companion to the Week 3 demo script and `ARCHITECTURE.md`. One paragraph per major architecture decision, in the order a grader is likely to ask about them. Read this before the defense; do not read it on camera.
 
@@ -14,7 +14,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 **Why:** the assignment requires live testing against the deployed target, and the security app itself must also be deployed. Treating local output as final evidence would test a different system shape than the demo and submission.
 
-**Evidence:** `ARCHITECTURE.md` names the deployment-to-deployment boundary; the plan requires artifacts to label `evidence_environment` so local traces cannot be confused with deployed evidence.
+**Evidence:** `ARCHITECTURE.md` names the deployment-to-deployment boundary; run artifacts label `evidence_environment` so local traces cannot be confused with deployed evidence.
 
 **Defense one-liner:** "Local tests help us build; deployed-to-deployed runs are the only evidence we submit."
 
@@ -38,7 +38,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 **Why:** the project is authorized adversarial testing of a known healthcare AI target, not a general offensive scanner. This protects the platform from misuse and keeps legal/scope boundaries clear.
 
-**Evidence:** `ARCHITECTURE.md` defines a target boundary; the implementation plan requires target override rejection and explicit deployed target configuration.
+**Evidence:** `ARCHITECTURE.md` defines a target boundary; target override is rejected by schema/allowlist tests and deployed target configuration lives outside request bodies.
 
 **Defense one-liner:** "The runner has a steering wheel, but the road is fenced: only the authorized deployed target is reachable."
 
@@ -50,7 +50,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 **Why:** LLM-as-judge can hallucinate, over-trust a plausible response, or share blind spots with the attack generator. Deterministic checks are cheaper and more repeatable for obvious failures like PHI leakage, wrong-role data access, patient-scope mismatch, target override, and missing refusal. Human approval keeps security claims from being auto-promoted when the evidence is severe or uncertain.
 
-**Evidence:** OWASP and NIST both emphasize testing, measurement, and human/technical verification. The plan includes judge goldens before relying on ambiguous semantic judging, and the architecture defines the finding state machine `draft -> needs_approval -> approved -> regression_queued`.
+**Evidence:** OWASP and NIST both emphasize testing, measurement, and human/technical verification. Judge goldens include safe refusals, echoed unsafe text, partial/server errors, and inconclusive cases. The architecture defines the finding state machine `draft -> needs_approval -> approved -> regression_queued`.
 
 **Defense one-liner:** "The platform does not trust an LLM to grade itself; clear failures are deterministic, and severe or ambiguous cases need a human sign-off."
 
@@ -62,7 +62,7 @@ The strongest single beat is the **independent judge plus deterministic regressi
 
 **Why:** the platform itself is deployed, so deployed campaigns need hosted inference. Groq gives a fast, low-cost mutation path for high-volume authorized tests; `gpt-5-nano` is a low-cost classification/summarization fit for the much smaller fallback judge path. Separating the red-team and judge model reduces shared blind spots.
 
-**Evidence:** the cost plan tracks Red Team, Judge, Documentation, retries, refusals, and target infrastructure separately. The architecture records provider/model metadata on every run so actual refusal rate, latency, and spend can override assumptions.
+**Evidence:** the cost plan tracks Red Team, Judge, Documentation, retries, refusals, Render infrastructure, disk, Langfuse, and target infrastructure separately. The architecture records provider/model metadata on every run so actual refusal rate, latency, and spend can override assumptions.
 
 **Defense one-liner:** "Groq mutates attacks cheaply; deterministic rules judge first; `gpt-5-nano` only helps when the result is semantically gray."
 
@@ -101,6 +101,30 @@ The strongest single beat is the **independent judge plus deterministic regressi
 **Evidence:** Week 2 already uses a PHI-safe logging policy in `Week2 - Test Suite/docs/PHI-LOGGING-POLICY.md`; AgentForge inherits that posture for run events and reports. Langfuse scores can store final verdict, confidence, and approval status without copying raw evidence into general telemetry.
 
 **Defense one-liner:** "Langfuse tells us what happened and how confident we are, while the sensitive evidence stays in controlled artifacts."
+
+---
+
+## ADR-009 - Coverage-driven orchestration instead of random campaigns
+
+**The decision:** default campaigns use the catalog, deployed run history, finding status, regression queue, and weak-surface score to recommend what to test next.
+
+**Why:** a final platform should learn where the target is weak over time. One static seed per category is useful for MVP proof, but the final Orchestrator needs to know which categories are untested, which have only shallow coverage, and which have produced vulnerable, partial, error, or unresolved evidence.
+
+**Evidence:** `GET /operator/status` exposes coverage summaries, weakest categories, and `next_campaign_recommendation`; run artifacts record `orchestrator_recommendations`.
+
+**Defense one-liner:** "The Orchestrator does not just run the next YAML file; it prioritizes gaps first, then the surfaces history says are weak."
+
+---
+
+## ADR-010 - Replay validation distinguishes fixes from drift
+
+**The decision:** approved regression cases can be replayed through `POST /operator/regressions/replay`, and each replay writes a validation artifact under `evals/regression/validations/`.
+
+**Why:** LLM behavior can drift, and a target change can accidentally reintroduce a vulnerability. A validation artifact records prior verdict, current verdict, category, target-change marker, and status: `resolved`, `reappeared`, or `needs_review`.
+
+**Evidence:** the operator runbook documents replay, and the final status endpoint summarizes queued regression cases plus latest validation.
+
+**Defense one-liner:** "A fix is not a promise; it is a replay result."
 
 ---
 

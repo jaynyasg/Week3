@@ -6,7 +6,7 @@
 
 AgentForge is a deployed adversarial security platform for evaluating the deployed OpenEMR Clinical Co-Pilot target from Week 2. The core architectural boundary is intentional: AgentForge is a separate security app, not a rewrite of the Clinical Co-Pilot. The target remains the deployed OpenEMR / Clinical Co-Pilot stack under `Week2 - Test Suite/`; AgentForge calls that target over its configured deployed URL and records evidence from those live deployment-to-deployment runs. Local execution may support development, but final submission evidence must come from deployed AgentForge running against deployed OpenEMR.
 
-The platform is multi-agent by role, even where the MVP uses deterministic code behind an agent boundary. The Red Team Agent generates and mutates attacks within an allowlisted target scope. The Orchestrator Agent selects bounded campaigns based on coverage gaps, budget, refusal rate, and unresolved findings. The Target Runner sends prompt sequences to the deployed Clinical Co-Pilot target and records target responses. The Judge Agent evaluates results independently from the red-team generator, using deterministic checks first and an LLM judge only for semantic gray areas. The Documentation Agent converts confirmed findings into vulnerability reports. The Regression Harness stores replayable cases under `evals/`. The Observability Layer records PHI-safe structured events, token/cost estimates, provider/model metadata, and evidence environment.
+The platform is multi-agent by role, even where the MVP uses deterministic code behind an agent boundary. The Red Team Agent generates and mutates attacks within an allowlisted target scope. The Orchestrator Agent selects bounded campaigns based on coverage gaps, weak-surface score, budget, refusal rate, regression queue, and unresolved findings. The Target Runner sends prompt sequences to the deployed Clinical Co-Pilot target and records target responses. The Judge Agent evaluates results independently from the red-team generator, using deterministic checks first and an LLM judge only for semantic gray areas. The Documentation Agent converts findings into vulnerability reports with impact, reproduction, expected/observed behavior, remediation, and validation status. The Regression Harness stores replayable cases under `evals/regression/` and exposes `POST /operator/regressions/replay` for target-change validation. The Observability Layer records PHI-safe structured events, token/cost estimates, provider/model metadata, evidence environment, coverage summaries, finding status counts, and regression validation summaries.
 
 The security posture is based on explicit trust boundaries. AgentForge must not accept arbitrary target URLs from public users. Deployed targets are configured by deployment secret or admin-only configuration, and campaign execution is limited to the authorized Clinical Co-Pilot deployment. Operator routes require authentication. Health routes can remain public. Artifact storage must be persistent in deployment because deployed run evidence must survive restarts. The container image must exclude the Week 2 target source tree, `.env` files, generated facts, local secrets, caches, and previous artifacts; the deployed security app references the target over HTTPS instead of packaging it.
 
@@ -40,7 +40,7 @@ flowchart TB
         JUDGE["Judge Agent"]
         DOC["Documentation Agent"]
         REG["Regression Harness"]
-        OBS["Observability Layer"]
+    OBS["Observability Layer"]
     end
 
     subgraph ART["Persistent Evidence Storage"]
@@ -48,6 +48,7 @@ flowchart TB
         RESULTS["evals/results"]
         REPORTS["evals/reports"]
         GOLDENS["evals/goldens"]
+        VALIDATIONS["evals/regression/validations"]
     end
 
     subgraph W2["Deployed OpenEMR / Clinical Co-Pilot Target"]
@@ -74,6 +75,7 @@ flowchart TB
     JUDGE --> REG
     DOC --> REPORTS
     REG --> CASES
+    REG --> VALIDATIONS
     ORCH --> RESULTS
     API --> OBS
     OBS --> RESULTS
@@ -100,18 +102,21 @@ flowchart TB
 | Red Team model | Groq `llama-3.1-8b-instant` behind provider abstraction | Deployed campaigns need fast hosted inference, JSON-style output, and low token cost. |
 | Judge model | Deterministic first, OpenAI `gpt-5-nano` fallback second | Reduces cost and avoids trusting the attack generator or a single model family. |
 | Documentation | Architecture and defense first | The build should remain aligned to the submission narrative and security boundaries. |
+| Orchestrator learning loop | Coverage gaps first, then weak surfaces and regression queue | Makes campaign selection explainable and keeps repeated campaigns focused on the target's weakest surfaces. |
+| Regression replay | Authenticated replay endpoint plus validation artifacts | Proves approved findings can be re-tested after target changes and separates true fixes from behavior drift. |
+| Observability summary | `/operator/status` plus Langfuse metadata | Answers the PDF's required questions without requiring a custom dashboard or raw transcript logging. |
 
 ## Agent Responsibilities
 
 | Role | Inputs | Outputs | Trust level |
 | --- | --- | --- | --- |
 | Red Team Agent | Attack category, target profile, budget, prior findings | Seed attacks, mutations, refusal telemetry | Uses Groq `llama-3.1-8b-instant` by default and can generate malicious test inputs only for allowlisted targets |
-| Orchestrator Agent | Coverage, budget, refusal rate, verdicts, operator request | Campaign plan, run schedule, halt decisions | Can schedule bounded runs but cannot override target allowlist |
+| Orchestrator Agent | Coverage, weak-surface score, regression queue, budget, refusal rate, verdicts, operator request | Campaign plan, run schedule, selection reasons, halt decisions, replay trigger path | Can schedule bounded runs but cannot override target allowlist |
 | Deployed Target Runner | Campaign plan, prompt sequence, target config | Target transcript, response metadata, errors | Network access only to configured target |
 | Judge Agent | Transcript, expected safe behavior, deterministic rules, goldens | Pass/fail/partial/inconclusive verdict, severity | Deterministic first; OpenAI `gpt-5-nano` fallback only for semantic gray areas; does not trust Red Team self-assessment |
-| Documentation Agent | Confirmed finding, evidence, verdict, framework refs | Vulnerability report and remediation direction | Writes reports only |
-| Regression Harness | Confirmed finding, run artifact, expected safe behavior | Replayable eval case and validation status | Stores repeatable checks |
-| Observability Layer | Run events, provider usage, costs, verdicts | PHI-safe structured logs and metrics | No raw PHI in general logs |
+| Documentation Agent | Finding, run evidence, verdict, framework refs, approval/replay status | Vulnerability report with impact, reproduction, expected/observed behavior, remediation, and validation status | Writes reports only |
+| Regression Harness | Confirmed finding, catalog case, expected safe behavior, target-change marker | Replayable eval case and validation artifact | Stores repeatable checks and current `resolved`/`reappeared`/`needs_review` status |
+| Observability Layer | Run events, provider usage, costs, verdicts, coverage, finding statuses, regression validations | PHI-safe structured logs, metrics, `/operator/status` summary, Langfuse metadata | No raw PHI in general logs or Langfuse payloads |
 
 ## Judge Correctness and Human Approval
 
@@ -180,7 +185,7 @@ Even if deployed on Render rather than AWS, the system should document security-
 
 ## Langfuse Observability
 
-Langfuse is the chosen LLM observability sink for MVP. It should be integrated as a fail-open telemetry path: if Langfuse is unavailable, campaigns continue and local artifacts remain authoritative.
+Langfuse is the chosen LLM observability sink for MVP. It is integrated as a fail-open telemetry path: if Langfuse is unavailable, campaigns continue and local artifacts remain authoritative. The operator-facing summary at `GET /operator/status` is the canonical low-friction observability view for the final demo; Langfuse is the trace/score companion.
 
 Trace shape:
 
@@ -191,6 +196,7 @@ Trace shape:
 - **Observation:** LLM judge fallback when used.
 - **Observation:** documentation/report generation.
 - **Score:** final verdict, severity, confidence, and human approval status.
+- **Summary:** coverage totals, weak categories, finding status counts, regression validation counts, cost totals, and ordered agent activity.
 
 Default captured fields:
 
@@ -215,12 +221,14 @@ Default excluded fields:
 - Groq `llama-3.1-8b-instant` is the first Red Team default, but refusal rate and quality must be measured rather than assumed.
 - OpenAI `gpt-5-nano` is the first LLM judge fallback, but deterministic checks remain the primary judge.
 - Langfuse is useful for trace review and scores, but repository artifacts remain the submission source of truth.
+- `/operator/status` is intentionally API-first rather than a custom dashboard; it satisfies the observability questions with artifacts and metadata that can be shown during the demo.
 - Persistent disk is acceptable for MVP evidence if access is protected and PHI-like artifacts are handled deliberately; production would need stronger encryption, retention, and access controls.
 
 ## Sources
 
 - Origin requirements: `docs/brainstorms/week3-adversarial-ai-security-platform-requirements.md`
-- Implementation plan: `docs/plans/2026-05-11-001-feat-agentforge-security-platform-plan.md`
+- MVP implementation plan: `docs/plans/2026-05-11-001-feat-agentforge-security-platform-plan.md`
+- Final completion plan: `docs/plans/2026-05-14-001-feat-agentforge-final-submission-plan.md`
 - Target reference: `Week2 - Test Suite/`
 - Week 2 architecture style: `Week2 - Test Suite/ARCHITECTURE.md`
 - Week 2 defense style: `Week2 - Test Suite/deploy/docs/architecture-defense.md`
