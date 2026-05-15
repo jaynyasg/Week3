@@ -4,13 +4,16 @@ Target length: 3 to 5 minutes.
 
 Use this script after the final authenticated deployed evidence sweep. Fill in the final run, report, and replay IDs before recording.
 
+Recommended recording path: show live `/health`, `/ready`, and `/operator/status` for credibility, then use the captured final artifacts for curated report and regression claims. If you rerun a campaign or replay live during the video, describe those outputs as fresh live results that may differ from the curated final captures.
+
 ## Pre-Recording Inputs
 
 | Item | Final value |
 | --- | --- |
 | Final deployed run ID | `run-6a5297ca98ab`; attachment rerun `run-94464fc484ac` |
 | Primary report IDs | `find-4e41695d42ec`, `find-2f92b8b731b0`, `find-63eb1564ab3c` |
-| Regression replay or validation ID | `regval-c5831da1bcba` |
+| Curated final regression validation ID | `regval-c5831da1bcba` |
+| Optional fresh live replay ID | Use the ID returned during recording, for example `regval-14e4a4072305` if using the latest live run. |
 | Demo video URL | `TODO` |
 | Published social post URL | `TODO` |
 
@@ -19,6 +22,7 @@ Use this script after the final authenticated deployed evidence sweep. Fill in t
 - Do not show `AGENTFORGE_OPERATOR_TOKEN`, provider keys, Langfuse secrets, cookies, or bearer values.
 - Use deployed AgentForge calling the deployed Clinical Co-Pilot target for every final evidence claim.
 - Describe judge-flagged findings as unconfirmed. Do not present likely false positives as confirmed target failures.
+- Separate curated evidence from fresh live results. Curated evidence is the final checked-in capture/report set; fresh live results prove the system still runs but may need approval or review before becoming final evidence.
 - If Render cold-starts during recording, show the latest captured deployed artifacts and call out the warm-up state plainly.
 
 ## 0:00 - Opening
@@ -26,11 +30,14 @@ Use this script after the final authenticated deployed evidence sweep. Fill in t
 Talk track:
 
 > This is AgentForge, an adversarial AI security platform built for the deployed Clinical Co-Pilot target. It is a multi-agent security workflow: the Red Team Agent proposes attacks, the Orchestrator prioritizes weak and under-tested surfaces, the Target Runner calls only the allowlisted deployed target, the Judge Agent evaluates independently, the Documentation Agent turns confirmed failures into reports, and the Regression Harness replays stored exploits after target changes.
+>
+> Since the MVP, the architecture grew from a bounded campaign runner with reports into a feedback system. I added explicit Human Approver, Regression Harness, and Observability roles, and the Orchestrator now reads coverage gaps, weak surfaces, finding status, regression state, and cost signals. That matters because a security platform should learn what to test next and prove whether fixes hold, not just produce one-off findings.
 
 Show:
 
 - `README.md` deployed links.
 - `ARCHITECTURE.md` or `deploy/docs/architecture-defense.md` agent responsibility summary.
+- MVP-to-final additions: approval lanes, regression replay, PHI-safe observability, coverage-driven recommendations, and final report curation.
 
 ## 0:30 - Deployed Readiness
 
@@ -79,7 +86,13 @@ Call out:
 
 Talk track:
 
-> Here is the final deployed campaign. The Orchestrator selects cases from the attack catalog, applies budget controls, preserves run metadata, and records why these cases were prioritized.
+If showing the captured final artifacts, say:
+
+> Here is the curated final deployed campaign evidence. This is the checked-in capture I am using for final claims: it comes from deployed AgentForge calling the deployed Clinical Co-Pilot target, and it records the selected cases, target URL, budget, findings, and orchestrator recommendations.
+
+If rerunning live, say:
+
+> I am also going to run a fresh live campaign to show the system still works end to end. This live run is useful operational evidence, but its new findings start in `needs_approval` or review lanes and should not replace the already curated final report evidence without another curation pass.
 
 Show either the fresh campaign request or the final run artifact:
 
@@ -99,12 +112,13 @@ Invoke-RestMethod `
 
 Call out:
 
-- Final run ID.
+- Captured final run ID, or the fresh live run ID if rerunning.
 - Deployed target URL.
 - Attack categories.
 - Case IDs.
 - Cost estimate and budget fields.
 - Selection reasons or orchestrator recommendations.
+- If the fresh run returns new findings such as `needs_approval`, say they are uncurated live findings.
 
 Final artifact to show if you do not rerun live during recording:
 
@@ -137,6 +151,14 @@ Talk track:
 
 > Confirmed findings are converted into replayable regression cases. When the target changes, the harness can replay stored exploits and classify them as resolved, reappeared, or needing review, which is how the platform detects whether the target is becoming more or less resilient over time.
 
+If showing the captured final replay, say:
+
+> In the curated final replay, `regval-c5831da1bcba` replayed all three stored regression cases. It marked the cost/DoS case resolved and the two attachment reliability cases reappeared, which is why the final status artifact shows both resolved and reappeared regression outcomes.
+
+If rerunning live and the output matches `regval-14e4a4072305`, say:
+
+> In this fresh live replay, the harness still replayed all three stored regression cases. The cost/DoS case is resolved, and the two attachment reliability cases are `needs_review` because the LLM fallback judge was unavailable for those inconclusive attachment outcomes. I am not going to call those reappeared in this live run; the important point is that the regression harness separates resolved, reappeared, and needs-review results instead of flattening them into one pass/fail bucket.
+
 Show:
 
 ```powershell
@@ -155,6 +177,7 @@ Call out:
 - Validation artifact ID or path.
 - Per-finding validation status.
 - Any reappeared, resolved, or needs-review results.
+- If live replay differs from the final capture, narrate the live summary exactly and keep the final capture as the curated report evidence.
 
 Final replay artifact to show if you do not rerun live during recording:
 
@@ -177,12 +200,15 @@ Show:
 Talk track:
 
 > Compared with the MVP, the final version adds deeper attack coverage, clearer judge evidence handling, coverage-driven prioritization, regression replay, final report curation, cost projections, and a submission package that separates deployed evidence from development artifacts.
+>
+> The biggest obstacle was evidence quality. Early judge output could flag safe refusals because unsafe terms appeared in echoed prompts, and the attachment flow initially failed before AgentForge sent the target-compatible payload shape. I handled that by separating confirmed, rejected, and needs-more-evidence lanes, replaying approved findings through regression, and rerunning the attachment case after the adapter fix so the final claims are tied to deployed evidence.
 
 Show:
 
 - `SUBMISSION.md`.
 - `docs/submission/platform-requirements-checklist.md`.
 - `deploy/docs/final-submission-runbook.md`.
+- `deploy/captures/findings-after-third-report-lane-20260514-180841.json`.
 
 End with:
 
