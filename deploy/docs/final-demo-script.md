@@ -191,7 +191,29 @@ Talk track:
 
 Show:
 
-- `GET /operator/status` observability answers.
+- Expanded `GET /operator/status` observability answers:
+
+```powershell
+$status = Invoke-RestMethod `
+  -Uri https://agentforge-security.onrender.com/operator/status `
+  -Headers $headers `
+  -TimeoutSec 30
+
+$status.observability.answers | Format-List
+$status.coverage.totals | Format-List
+$status.regressions.latest_validation.summary | Format-List
+$status.observability.findings.status_counts | Format-List
+$status.observability.cost | Format-List
+$status.observability.agent_activity_order | Format-Table agent, activity -Wrap
+$status.next_campaign_recommendation |
+  Select-Object case_id, category, reason, weak_surface_score, tested_case_count, available_case_count |
+  Format-Table -Wrap
+```
+
+Say:
+
+> PowerShell collapses nested objects in the first status view, so I expand the observability fields directly. These answers show the category and case coverage, finding status counts, regression validation counts, cost summary, agent activity order, and the Orchestrator's next weak-surface recommendations.
+
 - `AI-COST-ANALYSIS.md` cost projection table.
 - Langfuse project view if available and secrets are hidden.
 
@@ -202,6 +224,8 @@ Talk track:
 > Compared with the MVP, the final version adds deeper attack coverage, clearer judge evidence handling, coverage-driven prioritization, regression replay, final report curation, cost projections, and a submission package that separates deployed evidence from development artifacts.
 >
 > The biggest obstacle was evidence quality. Early judge output could flag safe refusals because unsafe terms appeared in echoed prompts, and the attachment flow initially failed before AgentForge sent the target-compatible payload shape. I handled that by separating confirmed, rejected, and needs-more-evidence lanes, replaying approved findings through regression, and rerunning the attachment case after the adapter fix so the final claims are tied to deployed evidence.
+>
+> During this recording, the live checks also showed the system is still healthy: AgentForge and the Clinical Co-Pilot target returned `ok` or `ready`, the operator status still showed deployed evidence mode with weak-surface recommendations, a fresh campaign completed as `run-c5be40e52ab5`, and a fresh replay `regval-14e4a4072305` replayed all three regression cases with one resolved case and two needs-review attachment cases. I am treating those as current operational results, while the checked-in final artifacts remain the curated submission evidence.
 
 Show:
 
@@ -209,6 +233,7 @@ Show:
 - `docs/submission/platform-requirements-checklist.md`.
 - `deploy/docs/final-submission-runbook.md`.
 - `deploy/captures/findings-after-third-report-lane-20260514-180841.json`.
+- Optional live outputs: `run-c5be40e52ab5` and `regval-14e4a4072305` if you showed them during recording.
 
 End with:
 
